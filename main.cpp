@@ -6,6 +6,7 @@
 #include <map>
 using namespace std;
 
+const char DELIMITER='/';
 
 
 class Restaurant
@@ -49,11 +50,13 @@ void update_with_slash(string& line)
         if(line[i] == ';' || line[i]== ',' || line[i]==':')
             line[i]='/';
     }
-    
+
 }
+
 
 vector<string>  split(string Line,char DELIMITER)
 {
+    update_with_slash(Line);
     istringstream ss(Line);
     string token;
     vector<string> inputSection;
@@ -69,9 +72,8 @@ void handle_restaurants(App& app, string name_file_restaurants){
 
 }
 
+
 void handle_districts(App& app){}
-
-
 
 
 void handle_input_data(char* argv[],App& app)
