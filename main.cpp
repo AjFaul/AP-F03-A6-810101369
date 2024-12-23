@@ -4,9 +4,42 @@
 #include <sstream>
 #include <list>
 #include <map>
-
-
 using namespace std;
+
+
+
+
+
+
+class Resaurants
+{
+private:
+    string name , district;
+    int open_time,close_time, num_of_table;
+    map<string , int> menu_item;
+public:
+    Resaurants(vector <string> data)
+    {
+        int size=data.size();
+        name=data[0];
+        district=data[1];
+        for(int i=2; i<(size - 3) ; i=i+2)
+            menu_item[data[i]]=stoi(data[i+1]);
+        open_time=stoi(data[size-3]);
+        close_time=stoi(data[size-2]);
+        num_of_table=stoi(data[size-1]);
+    }
+};
+
+
+
+
+
+
+
+
+
+
 
 vector<string>  split(string Line,char DELIMITER)
 {
