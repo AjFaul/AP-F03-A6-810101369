@@ -57,8 +57,15 @@ public:
                 name=data_line[i];
                 continue;
             }
-            neighbors[i-1]=data_line[i];
+            neighbors.push_back(data_line[i]);
         }
+    }
+
+    string get_name(){return name;}
+    void show_neighbor()
+    {
+        for(int i=0;i<neighbors.size();i++)
+            cout<<neighbors[i]<<endl;
     }
 };
 
@@ -148,16 +155,19 @@ void handle_districts(App& app,ifstream& file_district){
 void handle_input_data(char* argv[],App& app)
 {
     string name_file_restaurants=argv[1];
-    // string name_file_districts=argv[2];
+    string name_file_districts=argv[2];
     
     ifstream file_restaurants(name_file_restaurants);
     if(!file_restaurants.is_open())
         cout<<"file is not open"<<endl;
 
-    // ifstream file_districts(name_file_districts);
+    ifstream file_districts(name_file_districts);
+    if(!file_districts.is_open())
+        cout<<"file is not open"<<endl;
 
     handle_restaurants(app,file_restaurants);
-    // handle_districts(app);
+    handle_districts(app,file_districts);
+
 
 }
 
@@ -178,6 +188,8 @@ int main(int argc , char* argv[])
     App app;
     handle_input_data(argv,app);
     app.restaurants[1].print_menu();
+    cout<<endl<<endl<<endl;
+    app.dirstricts[0].show_neighbor();
 
 
 }
