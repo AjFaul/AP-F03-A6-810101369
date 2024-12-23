@@ -16,6 +16,9 @@ private:
     int open_time,close_time, num_of_table;
     map<string , int> menu_item;
 public:
+
+    string get_name(){return name;}
+
     Restaurant(vector <string> data)
     {
         int size=data.size();
@@ -30,13 +33,12 @@ public:
 };
 
 
-
 class App
 {
 private:
-    vector<Restaurant> restaurants ;
     int status_app;
 public:
+    vector<Restaurant> restaurants ;
     App(){status_app=1;}
     void Add_restaurant(Restaurant restaurant){restaurants.push_back(restaurant);}
 
@@ -53,7 +55,6 @@ void update_with_slash(string& line)
 
 }
 
-
 vector<string>  split(string Line,char DELIMITER)
 {
     update_with_slash(Line);
@@ -67,9 +68,20 @@ vector<string>  split(string Line,char DELIMITER)
 }
 
 
-void handle_restaurants(App& app, string name_file_restaurants){
-    
-
+void handle_restaurants(App& app,ifstream& file_restaurants)
+{
+    string line;
+    int num_line=0;
+    vector<string>data_line;
+    while (getline(file_restaurants,line))
+    {
+        if(num_line==0)
+            continue;
+        data_line=split(line,DELIMITER);
+        Restaurant restaurant(data_line);
+        app.Add_restaurant(restaurant);
+    }
+    file_restaurants.close();
 }
 
 
@@ -79,13 +91,13 @@ void handle_districts(App& app){}
 void handle_input_data(char* argv[],App& app)
 {
     string name_file_restaurants=argv[1];
-    string name_file_districts=argv[2];
+    // string name_file_districts=argv[2];
     
     ifstream file_restaurants(name_file_restaurants);
-    ifstream file_districts(name_file_districts);
+    // ifstream file_districts(name_file_districts);
 
-    handle_restaurants(app,name_file_restaurants);
-    handle_districts(app);
+    handle_restaurants(app,file_restaurants);
+    // handle_districts(app);
 
 }
 
@@ -103,5 +115,9 @@ void handle_input_data(char* argv[],App& app)
 
 int main(int argc , char* argv[])
 {
+    App app;
+    handle_input_data(argv,app);
+    // app.restaurants[0].get_name();
+
 
 }
