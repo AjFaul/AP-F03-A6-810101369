@@ -8,9 +8,6 @@ using namespace std;
 
 
 
-
-
-
 class Restaurant
 {
 private:
@@ -45,12 +42,15 @@ public:
 };
 
 
-
-
-
-
-
-
+void update_with_slash(string& line)
+{
+    for(int i=0;i<line.size() ; i++)
+    {
+        if(line[i] == ';' || line[i]== ',' || line[i]==':')
+            line[i]='/';
+    }
+    
+}
 
 vector<string>  split(string Line,char DELIMITER)
 {
@@ -62,6 +62,7 @@ vector<string>  split(string Line,char DELIMITER)
     }
     return inputSection;
 }
+
 
 void handle_restaurants(App& app, string name_file_restaurants){
     
