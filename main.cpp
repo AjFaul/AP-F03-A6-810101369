@@ -18,6 +18,15 @@ private:
 public:
 
     string get_name(){return name;}
+    string get_district(){return district;}
+    int get_open_time(){return open_time;}
+    int get_close_time(){return close_time;}
+    int get_num_of_table(){return num_of_table;}
+    void print_menu(){
+        for(auto it=menu_item.begin() ; it!=menu_item.end();it++){
+            cout<<(*it).first<< ":"<<(*it).second<<endl;
+        }
+    }
 
     Restaurant(vector <string> data)
     {
@@ -76,10 +85,14 @@ void handle_restaurants(App& app,ifstream& file_restaurants)
     while (getline(file_restaurants,line))
     {
         if(num_line==0)
+        {
+            num_line++;
             continue;
+        }
         data_line=split(line,DELIMITER);
         Restaurant restaurant(data_line);
         app.Add_restaurant(restaurant);
+
     }
     file_restaurants.close();
 }
@@ -94,6 +107,9 @@ void handle_input_data(char* argv[],App& app)
     // string name_file_districts=argv[2];
     
     ifstream file_restaurants(name_file_restaurants);
+    if(!file_restaurants.is_open())
+        cout<<"file is not open"<<endl;
+
     // ifstream file_districts(name_file_districts);
 
     handle_restaurants(app,file_restaurants);
@@ -117,7 +133,7 @@ int main(int argc , char* argv[])
 {
     App app;
     handle_input_data(argv,app);
-    // app.restaurants[0].get_name();
+    app.restaurants[0].print_menu();
 
 
 }
