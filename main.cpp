@@ -11,14 +11,14 @@ using namespace std;
 
 
 
-class Resaurants
+class Restaurant
 {
 private:
     string name , district;
     int open_time,close_time, num_of_table;
     map<string , int> menu_item;
 public:
-    Resaurants(vector <string> data)
+    Restaurant(vector <string> data)
     {
         int size=data.size();
         name=data[0];
@@ -32,6 +32,17 @@ public:
 };
 
 
+
+class App
+{
+private:
+    vector<Restaurant> restaurants ;
+    int status_app;
+public:
+    App(){status_app=1;}
+    void Add_restaurant(Restaurant restaurant){restaurants.push_back(restaurant);}
+
+};
 
 
 
@@ -52,14 +63,17 @@ vector<string>  split(string Line,char DELIMITER)
     return inputSection;
 }
 
-void handle_restaurants(){}
+void handle_restaurants(App& app, string name_file_restaurants){
+    
 
-void handle_districts(){}
+}
+
+void handle_districts(App& app){}
 
 
 
 
-void handle_input_data(char* argv[])
+void handle_input_data(char* argv[],App& app)
 {
     string name_file_restaurants=argv[1];
     string name_file_districts=argv[2];
@@ -67,8 +81,8 @@ void handle_input_data(char* argv[])
     ifstream file_restaurants(name_file_restaurants);
     ifstream file_districts(name_file_districts);
 
-    handle_restaurants();
-    handle_districts();
+    handle_restaurants(app,name_file_restaurants);
+    handle_districts(app);
 
 }
 
