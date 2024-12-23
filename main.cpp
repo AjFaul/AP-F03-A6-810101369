@@ -42,15 +42,42 @@ public:
 };
 
 
+class Dirstrict
+{
+private:
+    string name;
+    vector<string> neighbors;
+public:
+    Dirstrict(vector<string> data_line)
+    {
+        for(int i=0;i<data_line.size();i++)
+        {
+            if(i==0)
+            {
+                name=data_line[i];
+                continue;
+            }
+            neighbors[i-1]=data_line[i];
+        }
+    }
+};
+
+
+
+
+
+
+
 class App
 {
 private:
     int status_app;
 public:
     vector<Restaurant> restaurants ;
+    vector<Dirstrict> dirstricts;
     App(){status_app=1;}
     void Add_restaurant(Restaurant restaurant){restaurants.push_back(restaurant);}
-
+    void Add_district(Dirstrict district){dirstricts.push_back(district);}
 };
 
 
@@ -98,7 +125,24 @@ void handle_restaurants(App& app,ifstream& file_restaurants)
 }
 
 
-void handle_districts(App& app){}
+void handle_districts(App& app,ifstream& file_district){
+    string line;
+    int num_line=0;
+    vector<string> data_line;
+    while (getline(file_district,line))
+    {
+        if(num_line==0)
+        {
+            num_line++;
+            continue;
+        }
+        data_line=split(line,DELIMITER);
+        Dirstrict dirstrict(data_line);
+        app.Add_district(dirstrict);
+    }
+    file_district.close();
+    
+}
 
 
 void handle_input_data(char* argv[],App& app)
@@ -133,7 +177,7 @@ int main(int argc , char* argv[])
 {
     App app;
     handle_input_data(argv,app);
-    app.restaurants[0].print_menu();
+    app.restaurants[1].print_menu();
 
 
 }
