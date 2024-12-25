@@ -21,8 +21,9 @@ public:
     int start_time,end_time,reserve_id,price,table_num;
     string restaurants_name;
     string district_name;
+    int num_of_reserve;
 
-    Reserve(string name, int stime,int etime,int res_id, int price_order, int N_table,string rest_name,string district)
+    Reserve(string name, int stime,int etime,int res_id, int price_order, int N_table,string rest_name,string district, int num_reserve)
     {
         name_food=name;
         start_time=stime;
@@ -32,7 +33,10 @@ public:
         table_num=N_table;
         restaurants_name=rest_name;
         district_name=district;
+        num_of_reserve=num_reserve;
     }
+
+    void Add_reserve(){num_of_reserve++;}
 
     bool conflict(Reserve order)
     {
@@ -68,10 +72,10 @@ public:
     template<typename M>
     bool find_food(M& restaurant)
     {
-        for(it=restaurant.menu_item.begin() ; it!=restaurant.menu_item.end(); it++)
+        for(auto it=restaurant.menu_item.begin() ; it!=restaurant.menu_item.end(); it++)
         {
-            if(this->name_food== (*it).fisrt)
-                return true
+            if(this->name_food== (*it).first)
+                return true;
         }
         return false;
     }
@@ -378,9 +382,9 @@ public:
 
     }
 
-    bool reserve(string rest_name , int table_id, int s_time, int e_time ,string food_name, User& user, App& app,int res_id, int price)
+    bool reserve(string rest_name , int table_id, int s_time, int e_time ,string food_name, User& user, App& app,int res_id, int price,string district, int num_reserve)
     {
-        Reserve new_res=Reserve(food_name,s_time,e_time,res_id,price ,table_id, rest_name);
+        Reserve new_res=Reserve(food_name,s_time,e_time,res_id,price ,table_id, rest_name, district, num_reserve);
         for (int i=0;i<app.restaurants.size();i++)
         {
             if( rest_name== app.restaurants[i].get_name())
@@ -422,6 +426,7 @@ public:
     {
         cout<<meine.reserve_id<<": "<<meine.district_name<<" ";
         cout<<meine.table_num<<" "<<meine.start_time<<"-"<<meine.end_time<<endl;
+        // cout<<" "<<meine.name_food<<"("<<meine.num_of_reserve<<")"<<endl;
     }
 
 
@@ -434,6 +439,41 @@ public:
             for(int i=0;i<user.reserves.size();i++)
                 show_reserve_info(user.reserves[i]);
         }
+    }
+
+    bool show_res(string rest_name , int ID , User& user,App& app)
+    {
+        for(int i=0;i<user.reserves.size();i++)
+        {
+            if(!(user.reserves[i].restaurants_name== rest_name)|| !(user.reserves[i].reserve_id==ID) )
+                {
+                    Output_msg::Permission_Denied();
+                    return false;
+                }
+        }
+
+
+        int status=0;
+        for(int i=0;i<app.restaurants.size();i++)
+        {
+            if(status==1)
+                break;
+            if(app.restaurants[i].get_name()==rest_name)
+            {
+                for(int j=0 ; j<app.restaurants[i].reserves.size();j++)
+                {
+                    if(app.restaurants[i].reserves[j].reserve_id == ID)
+                    {
+                        status=1;
+                        break;
+                    }
+                }
+                return false;
+            }
+        }
+        show_user_reserve(user);
+
+
     }
 
 
@@ -452,6 +492,17 @@ public:
 
 
 };
+
+
+// class DELETE : public Output_msg
+// {
+// private:
+//     int status=0;
+// public:
+//     DELETE(){status=1;}
+
+//     bool reserve(string name_rest , int ID  , User user , )
+// };
 
 
 
