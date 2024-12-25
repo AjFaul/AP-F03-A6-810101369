@@ -41,7 +41,6 @@ public:
     }
 };
 
-
 class Dirstrict
 {
 private:
@@ -69,23 +68,92 @@ public:
     }
 };
 
-
-
-
-
-
-
 class App
 {
 private:
     int status_app;
 public:
+    vector<User> users;
     vector<Restaurant> restaurants ;
     vector<Dirstrict> dirstricts;
     App(){status_app=1;}
     void Add_restaurant(Restaurant restaurant){restaurants.push_back(restaurant);}
     void Add_district(Dirstrict district){dirstricts.push_back(district);}
+    void Add_user(string username , string password){users.push_back(User(username , password));}
 };
+
+class Output_msg
+{
+private:
+    int status=0;
+public:
+    Output_msg(){status=1;}
+    void OK(){ cout<<"OK";}
+    void Empty(){cout<<"Empty";}
+    void Not_Found(){cout<<"Not Found";}
+    void Bad_Request(){cout<<"Bad_Request";}
+    void Permission_Denied(){cout<<"Permission_Denied";}
+};
+
+class User
+{
+private:
+    int status;
+    string username;
+    string password;
+public:
+    User(){status=1;}
+    User(string name,string pass)
+    {
+        status=1;
+        username=name;
+        password=pass;
+    }
+    string get_username(){return username;}
+    string get_password(){return password;}
+};
+
+
+
+
+
+
+
+// class POST :public Output_msg
+// {
+// private:
+//     int status_post=0;
+// public:
+//     POST(){status_post=1;}
+
+//     void signup(string username , string password,App& app)
+//     {
+//         for (int i=0;i<app.users.size();i++)
+//         {
+//             if(username==app.users[i].get_username())
+//             {
+//                 Output_msg::Bad_Request();
+//                 break;
+//             }
+//         }
+//         app.users.push_back(User(username,password));
+//     }
+
+
+
+// };
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 void update_with_slash(string& line)
@@ -110,7 +178,6 @@ vector<string>  split(string Line,char DELIMITER)
     return inputSection;
 }
 
-
 void handle_restaurants(App& app,ifstream& file_restaurants)
 {
     string line;
@@ -131,7 +198,6 @@ void handle_restaurants(App& app,ifstream& file_restaurants)
     file_restaurants.close();
 }
 
-
 void handle_districts(App& app,ifstream& file_district){
     string line;
     int num_line=0;
@@ -150,7 +216,6 @@ void handle_districts(App& app,ifstream& file_district){
     file_district.close();
     
 }
-
 
 void handle_input_data(char* argv[],App& app)
 {
