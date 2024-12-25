@@ -11,6 +11,7 @@ const char DELIMITER='/';
 
 
 
+
 class Reserve
 {
 private:
@@ -31,15 +32,44 @@ public:
 
     bool conflict(Reserve order)
     {
-        if(order.start_time >= this->start_time && order.start_time<=end_time)
-            return 0;
-        if(order.end_time >= this->start_time && order.end_time<=end_time)
-            return 0;
-        if(this->start_time >= order.start_time && this->start_time<=end_time)
-            return 0;
-        if(this->end_time >= order.start_time && this->end_time<=end_time)
-            return 0;
+        if(order.start_time >= this->start_time && order.start_time<=end_time && this->table_num==order.table_num)
+            return false;
+        if(order.end_time >= this->start_time && order.end_time<=end_time && this->table_num==order.table_num)
+            return false;
+        if(this->start_time >= order.start_time && this->start_time<=end_time && this->table_num==order.table_num) 
+            return false;
+        if(this->end_time >= order.start_time && this->end_time<=end_time && this->table_num==order.table_num)
+            return false;
+        return true;
+    }
+    template <typename T>
+    bool conflict_restaurants_time(T rest)
+    {
+        if(this->start_time>=rest.get_open_time ()&& this->end_time <=rest.get_close_time())
+            return true;
+        return false;
+    }
+
+    template <typename J>
+    bool conflict_by_own(J& user)
+    {
+        for(int i=0;i<user.reserves.size();i++)
+        {
+            if(this->conflict(user.reserves[i]))
+                return 0;
+        }
         return 1;
+    }
+
+    template<typename M>
+    bool find_food(M& restaurant)
+    {
+        for(it=restaurant.menu_item.begin() ; it!=restaurant.menu_item.end(); it++)
+        {
+            if(this->name_food== (*it).fisrt)
+                return true
+        }
+        return false;
     }
 
 };
@@ -55,6 +85,7 @@ private:
     string password;
     string district;
 public:
+    vector<Reserve> reserves;
     User(){status=1;}
     User(string name,string pass)
     {
@@ -107,6 +138,7 @@ private:
     string name , district;
     int open_time,close_time, num_of_table;
 public:
+    vector<Reserve> reserves;
     map<string , int> menu_item;
     string get_name(){return name;}
     string get_district(){return district;}
@@ -344,6 +376,60 @@ public:
         return 0;
 
     }
+
+    bool reserve(string rest_name , int table_id, int s_time, int e_time ,string food_name, User& user, App& app,int res_id, int price)
+    {
+
+        Reserve new_res=Reserve(food_name,s_time,e_time,res_id,price ,table_id, rest_name);
+        // for (int i=0;i<app.restaurants.size();i++)
+        // {
+        //     if( rest_name== app.restaurants[i].get_name())
+        //     {
+        //         if(!(new_res.conflict_restaurants_time(app.restaurants[i])))
+        //         {
+        //             for(int j=0;j<app.restaurants[i].reserves.size();j++)
+        //             {
+        //                 if(new_res.conflict(app.restaurants[i].reserves[j]))
+        //                 {
+        //                     Output_msg::Permission_Denied();
+        //                     return false;
+        //                 }
+        //             }
+        //             user.reserves.push_back(new_res);
+        //             app.restaurants[i].reserves.push_back(new_res);
+        //             return true;
+        //         }else
+        //             {
+        //                 Output_msg::Permission_Denied();
+        //                 return false;
+        //             }
+            
+        //     }
+        // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    }
+
+
+
 
 };
 
