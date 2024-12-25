@@ -8,6 +8,45 @@ using namespace std;
 
 const char DELIMITER='/';
 
+
+
+
+class Reserve
+{
+private:
+    string name_food;
+    int start_time,end_time,reserve_id,price,table_num;
+    string restaurants_name;
+public:
+    Reserve(string name, int stime,int etime,int res_id, int price_order, int N_table,string rest_name)
+    {
+        name_food=name;
+        start_time=stime;
+        end_time=etime;
+        reserve_id=res_id;
+        price=price_order;
+        table_num=N_table;
+        restaurants_name=rest_name;
+    }
+
+    bool conflict(Reserve order)
+    {
+        if(order.start_time >= this->start_time && order.start_time<=end_time)
+            return 0;
+        if(order.end_time >= this->start_time && order.end_time<=end_time)
+            return 0;
+        if(this->start_time >= order.start_time && this->start_time<=end_time)
+            return 0;
+        if(this->end_time >= order.start_time && this->end_time<=end_time)
+            return 0;
+        return 1;
+    }
+
+};
+
+
+
+
 class User
 {
 private:
