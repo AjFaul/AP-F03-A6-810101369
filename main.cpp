@@ -15,11 +15,14 @@ const char DELIMITER='/';
 class Reserve
 {
 private:
+    int status;
+public:
     string name_food;
     int start_time,end_time,reserve_id,price,table_num;
     string restaurants_name;
-public:
-    Reserve(string name, int stime,int etime,int res_id, int price_order, int N_table,string rest_name)
+    string district_name;
+
+    Reserve(string name, int stime,int etime,int res_id, int price_order, int N_table,string rest_name,string district)
     {
         name_food=name;
         start_time=stime;
@@ -28,6 +31,7 @@ public:
         price=price_order;
         table_num=N_table;
         restaurants_name=rest_name;
+        district_name=district;
     }
 
     bool conflict(Reserve order)
@@ -73,9 +77,6 @@ public:
     }
 
 };
-
-
-
 
 class User
 {
@@ -379,54 +380,73 @@ public:
 
     bool reserve(string rest_name , int table_id, int s_time, int e_time ,string food_name, User& user, App& app,int res_id, int price)
     {
-
         Reserve new_res=Reserve(food_name,s_time,e_time,res_id,price ,table_id, rest_name);
-        // for (int i=0;i<app.restaurants.size();i++)
-        // {
-        //     if( rest_name== app.restaurants[i].get_name())
-        //     {
-        //         if(!(new_res.conflict_restaurants_time(app.restaurants[i])))
-        //         {
-        //             for(int j=0;j<app.restaurants[i].reserves.size();j++)
-        //             {
-        //                 if(new_res.conflict(app.restaurants[i].reserves[j]))
-        //                 {
-        //                     Output_msg::Permission_Denied();
-        //                     return false;
-        //                 }
-        //             }
-        //             user.reserves.push_back(new_res);
-        //             app.restaurants[i].reserves.push_back(new_res);
-        //             return true;
-        //         }else
-        //             {
-        //                 Output_msg::Permission_Denied();
-        //                 return false;
-        //             }
-            
-        //     }
-        // }
+        for (int i=0;i<app.restaurants.size();i++)
+        {
+            if( rest_name== app.restaurants[i].get_name())
+            {
+                if(!(new_res.find_food(app.restaurants[i])))
+                {
+                    Output_msg::Not_Found();
+                    return false;
+                }
 
+                if(new_res.conflict_restaurants_time(app.restaurants[i]))
+                {
+                    Output_msg::Permission_Denied();
+                    return false;
+                }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                for(int j=0; j<app.restaurants[i].reserves.size(); j++)
+                {
+                    if(new_res.conflict(app.restaurants[i].reserves[j]))
+                    {
+                        Output_msg::Permission_Denied();
+                        return false;
+                    }
+                }
+            }
+        }
+        if(new_res.conflict_by_own(user))
+        {
+            Output_msg::Permission_Denied();
+            return false;
+        }
+        cout<<"Reserve ID: "<<res_id<<endl;
+        cout<<"Table "<<table_id<<" for "<<s_time<<" to "<<e_time<<" in "<<rest_name<<endl;
+        cout<<"Price: "<<price<<endl;
     }
+
+
+    void show_reserve_info(Reserve meine)
+    {
+        cout<<meine.reserve_id<<": "<<meine.district_name<<" ";
+        cout<<meine.table_num<<" "<<meine.start_time<<"-"<<meine.end_time<<endl;
+    }
+
+
+    void show_user_reserve(User& user)
+    {
+        if(user.reserves.size()==0)
+            Output_msg::Empty();
+        else
+        {
+            for(int i=0;i<user.reserves.size();i++)
+                show_reserve_info(user.reserves[i]);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
