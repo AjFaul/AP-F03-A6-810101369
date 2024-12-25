@@ -99,23 +99,20 @@ public:
         cout<<"District: "<<district<<endl;
         cout<<"Time: "<<open_time<<"-"<<close_time<<endl;
         cout<<"Menu: ";
-        int i=0;
         for(auto it=menu_item.begin() ; it!=menu_item.end();it++)
         {
-            if(i==0)
+            if(it==menu_item.begin())
             {
-                cout<<(*it).first;
+                cout<<(*it).first<<"("<<(*it).second<<")";
                 continue;
             }
-            cout<<", "<<(*it).first;
+            cout<<", "<<(*it).first<<"("<<(*it).second<<")";
         }
         cout<<endl;
     }
 
 
 };
-
-
 
 class App
 {
@@ -414,7 +411,7 @@ int main(int argc , char* argv[])
     GET get;
     User user;
     user.set_district("Azadi");
-    get.show_info_restaurants("Sib",app);
+    get.show_info_restaurants("sib",app);
 
 
 }
