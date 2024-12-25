@@ -119,29 +119,29 @@ public:
 
 
 
-// class POST :public Output_msg
-// {
-// private:
-//     int status_post=0;
-// public:
-//     POST(){status_post=1;}
+class POST :public Output_msg
+{
+private:
+    int status_post=0;
+public:
+    POST(){status_post=1;}
 
-//     void signup(string username , string password,App& app)
-//     {
-//         for (int i=0;i<app.users.size();i++)
-//         {
-//             if(username==app.users[i].get_username())
-//             {
-//                 Output_msg::Bad_Request();
-//                 break;
-//             }
-//         }
-//         app.users.push_back(User(username,password));
-//     }
+    void signup(string username , string password,App& app)
+    {
+        for (int i=0;i<app.users.size();i++)
+        {
+            if(username==app.users[i].get_username())
+            {
+                Output_msg::Bad_Request();
+                break;
+            }
+        }
+        app.users.push_back(User(username,password));
+    }
 
 
 
-// };
+};
 
 
 
