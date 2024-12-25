@@ -8,6 +8,23 @@ using namespace std;
 
 const char DELIMITER='/';
 
+class User
+{
+private:
+    int status;
+    string username;
+    string password;
+public:
+    User(){status=1;}
+    User(string name,string pass)
+    {
+        status=1;
+        username=name;
+        password=pass;
+    }
+    string get_username(){return username;}
+    string get_password(){return password;}
+};
 
 class Restaurant
 {
@@ -63,8 +80,10 @@ public:
     string get_name(){return name;}
     void show_neighbor()
     {
-        for(int i=0;i<neighbors.size();i++)
-            cout<<neighbors[i]<<endl;
+        cout<<name<<":";
+        for(int i=0;i<neighbors.size()-1;i++)
+            cout<<" "<<neighbors[i]<<",";
+        cout<<" "<<neighbors[neighbors.size()-1]<<endl;
     }
 };
 
@@ -88,47 +107,23 @@ private:
     int status=0;
 public:
     Output_msg(){status=1;}
-    void OK(){ cout<<"OK";}
-    void Empty(){cout<<"Empty";}
-    void Not_Found(){cout<<"Not Found";}
-    void Bad_Request(){cout<<"Bad_Request";}
-    void Permission_Denied(){cout<<"Permission_Denied";}
+    void OK(){ cout<<"OK"<<endl;}
+    void Empty(){cout<<"Empty"<<endl;}
+    void Not_Found(){cout<<"Not Found"<<endl;}
+    void Bad_Request(){cout<<"Bad_Request"<<endl;}
+    void Permission_Denied(){cout<<"Permission_Denied"<<endl;}
 };
-
-class User
-{
-private:
-    int status;
-    string username;
-    string password;
-public:
-    User(){status=1;}
-    User(string name,string pass)
-    {
-        status=1;
-        username=name;
-        password=pass;
-    }
-    string get_username(){return username;}
-    string get_password(){return password;}
-};
-
-
-
 
 template <typename I,typename T>
 int has_username(I onething , T something)
 {
-    for(int i=0 ; i<T.size(); i++)
+    for(int i=0 ; i<something.size(); i++)
     {
         if(onething == something[i].get_username())
             return (i+1);
     }
     return 0;
 }
-
-
-
 
 class POST :public Output_msg
 {
@@ -168,14 +163,40 @@ public:
 
 
 
+template <typename I, typename T>
+int has_district(I onething , T something)
+{
+    for(int i=0; i<something.size() ;i++)
+    {
+        if(onething==something[i].get_name())
+            return i+1;
+    }
+    return 0;
+}
 
+class GET : public Output_msg
+{
+private:
+    int status=0;
+public:
+    GET(){status=1;}
 
+    void districts(string name_district,App& app)
+    {
+        if(name_district=="NULL")
+            Output_msg::Empty();
+        else
+        {
+            int status_districts=has_district(name_district,app.dirstricts);
+            if(status_districts)
+                app.dirstricts[status_districts-1].show_neighbor();
+            else
+                Output_msg::Not_Found();
+        }
+    }
 
-
-
-
-
-
+    void 
+};
 
 
 
@@ -264,20 +285,13 @@ void handle_input_data(char* argv[],App& app)
 
 
 
-
-
-
-
-
-
-
 int main(int argc , char* argv[])
 {
     App app;
     handle_input_data(argv,app);
-    app.restaurants[1].print_menu();
-    cout<<endl<<endl<<endl;
-    app.dirstricts[0].show_neighbor();
+    
+    GET get;
+    get.districts("Enghelab",app);
 
 
 }
