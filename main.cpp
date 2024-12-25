@@ -116,6 +116,17 @@ public:
 
 
 
+template <typename I,typename T>
+int has_username(I onething , T something)
+{
+    for(int i=0 ; i<T.size(); i++)
+    {
+        if(onething == something[i].get_username())
+            return (i+1);
+    }
+    return 0;
+}
+
 
 
 
@@ -128,18 +139,30 @@ public:
 
     void signup(string username , string password,App& app)
     {
-        for (int i=0;i<app.users.size();i++)
-        {
-            if(username==app.users[i].get_username())
-            {
-                Output_msg::Bad_Request();
-                break;
-            }
-        }
-        app.users.push_back(User(username,password));
+        if(has_username(username, app.users))
+            Output_msg::Bad_Request();
+        else
+            app.users.push_back(User(username,password));
     }
 
-
+    int login(string username, string password,App& app)
+    {
+        int has_user=has_username(username, app.users);
+        if(has_user)   
+        {
+            if(app.users[has_user-1].get_password() == password)
+                return 1;
+            else
+                {
+                    Output_msg::Permission_Denied();
+                    return 0;
+                }
+        }else
+            {
+                Output_msg::Not_Found();
+                return 0;
+            }
+    }
 
 };
 
