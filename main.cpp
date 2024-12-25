@@ -14,6 +14,7 @@ private:
     int status;
     string username;
     string password;
+    string district;
 public:
     User(){status=1;}
     User(string name,string pass)
@@ -24,46 +25,18 @@ public:
     }
     string get_username(){return username;}
     string get_password(){return password;}
-};
-
-class Restaurant
-{
-private:
-    string name , district;
-    int open_time,close_time, num_of_table;
-    map<string , int> menu_item;
-public:
-
-    string get_name(){return name;}
-    string get_district(){return district;}
-    int get_open_time(){return open_time;}
-    int get_close_time(){return close_time;}
-    int get_num_of_table(){return num_of_table;}
-    void print_menu(){
-        for(auto it=menu_item.begin() ; it!=menu_item.end();it++){
-            cout<<(*it).first<< ":"<<(*it).second<<endl;
-        }
-    }
-
-    Restaurant(vector <string> data)
-    {
-        int size=data.size();
-        name=data[0];
-        district=data[1];
-        for(int i=2; i<(size - 3) ; i=i+2)
-            menu_item[data[i]]=stoi(data[i+1]);
-        open_time=stoi(data[size-3]);
-        close_time=stoi(data[size-2]);
-        num_of_table=stoi(data[size-1]);
-    }
+    void set_district(string ddstrict){district=ddstrict;}
+    string get_district( ){return district;}
 };
 
 class Dirstrict
 {
 private:
     string name;
-    vector<string> neighbors;
 public:
+
+    vector<string> neighbors;
+
     Dirstrict(vector<string> data_line)
     {
         for(int i=0;i<data_line.size();i++)
@@ -85,7 +58,64 @@ public:
             cout<<" "<<neighbors[i]<<",";
         cout<<" "<<neighbors[neighbors.size()-1]<<endl;
     }
+
+
 };
+
+class Restaurant
+{
+private:
+    string name , district;
+    int open_time,close_time, num_of_table;
+public:
+    map<string , int> menu_item;
+    string get_name(){return name;}
+    string get_district(){return district;}
+    int get_open_time(){return open_time;}
+    int get_close_time(){return close_time;}
+    int get_num_of_table(){return num_of_table;}
+
+    void print_menu(){
+        for(auto it=menu_item.begin() ; it!=menu_item.end();it++){
+            cout<<(*it).first<< ":"<<(*it).second<<endl;
+        }
+    }
+
+    Restaurant(vector <string> data)
+    {
+        int size=data.size();
+        name=data[0];
+        district=data[1];
+        for(int i=2; i<(size - 3) ; i=i+2)
+            menu_item[data[i]]=stoi(data[i+1]);
+        open_time=stoi(data[size-3]);
+        close_time=stoi(data[size-2]);
+        num_of_table=stoi(data[size-1]);
+    }
+
+    void show_info()
+    {
+        cout<<"Name: "<<name<<endl;
+        cout<<"District: "<<district<<endl;
+        cout<<"Time: "<<open_time<<"-"<<close_time<<endl;
+        cout<<"Menu: ";
+        int i=0;
+        for(auto it=menu_item.begin() ; it!=menu_item.end();it++)
+        {
+            if(i==0)
+            {
+                cout<<(*it).first;
+                continue;
+            }
+            cout<<", "<<(*it).first;
+        }
+        cout<<endl;
+    }
+
+
+};
+
+
 
 class App
 {
@@ -113,6 +143,7 @@ public:
     void Bad_Request(){cout<<"Bad_Request"<<endl;}
     void Permission_Denied(){cout<<"Permission_Denied"<<endl;}
 };
+
 
 template <typename I,typename T>
 int has_username(I onething , T something)
@@ -162,7 +193,6 @@ public:
 };
 
 
-
 template <typename I, typename T>
 int has_district(I onething , T something)
 {
@@ -174,17 +204,61 @@ int has_district(I onething , T something)
     return 0;
 }
 
+template <typename I, typename T>
+bool has_food(I onething , T something)
+{
+    for(auto it=something.begin();it!=something.end();it++)
+    {
+        if(onething==(*it)->first)
+            return true;
+    }
+    return false;
+}
+
+
+
 class GET : public Output_msg
 {
 private:
     int status=0;
+
+    bool find_restaurants_by_place(string name_place, App& app,int type_cmd,string food_name)
+    {
+        
+        for(int i=0;i<app.restaurants.size();i++)
+        {
+            if(name_place==app.restaurants[i].get_district() && (!type_cmd || (app.restaurants[i].menu_item[food_name]!=0)))
+                cout<<app.restaurants[i].get_name()<<" ("<<name_place<<")"<<endl;
+        }
+        return 1;
+
+    }
+
+    void show_restaurants_places(User& user , App& app,int type_cmd,string food_name)
+    {
+        for(int i=0;i<app.dirstricts.size();i++)
+        {
+            if(app.dirstricts[i].get_name() == user.get_district())
+            {
+                find_restaurants_by_place(user.get_district(),app ,type_cmd , food_name );
+                for(int j=0 ;j<app.dirstricts[i].neighbors.size();j++)
+                    find_restaurants_by_place(app.dirstricts[i].neighbors[j],app,type_cmd , food_name );
+
+                break;
+            }
+        } 
+    }
+
 public:
     GET(){status=1;}
 
     void districts(string name_district,App& app)
     {
         if(name_district=="NULL")
-            Output_msg::Empty();
+            {
+                for(int i=0;i<app.dirstricts.size();i++)
+                    app.dirstricts[i].show_neighbor();
+            }
         else
         {
             int status_districts=has_district(name_district,app.dirstricts);
@@ -195,8 +269,55 @@ public:
         }
     }
 
-    void 
+    void my_districts(string name_district , User& user,App& app)
+    {
+        int status_districts=has_district(name_district,app.dirstricts);
+        if(status_districts)
+        {
+            Output_msg::OK();
+            user.set_district(name_district);
+        }
+        else
+            Output_msg::Not_Found();
+    }
+
+    void restaurants(string food_name,User& user, App& app){
+        if(food_name=="NULL")
+        {
+            show_restaurants_places(user,app,0,food_name);
+        }
+        else
+        {
+            
+            show_restaurants_places(user,app,1,food_name);
+        }
+
+    }
+
+    int show_info_restaurants(string name, App &app)
+    {
+        for(int i=0;i<app.restaurants.size();i++)
+        {
+            if(name==app.restaurants[i].get_name())
+            {
+                app.restaurants[i].show_info();
+                return 1;
+            }
+        }
+        Output_msg::Not_Found();
+        return 0;
+
+    }
+
 };
+
+
+
+
+
+
+
+
 
 
 
@@ -291,7 +412,9 @@ int main(int argc , char* argv[])
     handle_input_data(argv,app);
     
     GET get;
-    get.districts("Enghelab",app);
+    User user;
+    user.set_district("Azadi");
+    get.show_info_restaurants("Sib",app);
 
 
 }
