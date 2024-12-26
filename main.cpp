@@ -4,6 +4,8 @@
 #include <sstream>
 #include <list>
 #include <map>
+#include <algorithm>
+#include <bits/stdc++.h>
 using namespace std;
 
 const char DELIMITER='/';
@@ -49,7 +51,7 @@ vector<string>  split_by_space(string Line,char DELIMITER)
 int CMD_CONTROLLER(string line)
 {
     vector<string> input_sections;
-    split_by_space(line,DELIMITER_SPACE);
+    input_sections=split_by_space(line,DELIMITER_SPACE);
     string output_type;
     if(input_sections[0]==CMD_POST)
         output_type+="1";
@@ -69,31 +71,49 @@ int CMD_CONTROLLER(string line)
         output_type+="3";
 
     if(input_sections[1]=="reserve")
+    {
         output_type+="4"; 
-    if(input_sections[1]=="reserve" && input_sections[11].empty())
-        output_type+="1"; 
+        auto it =find(input_sections.begin() , input_sections.end() , "foods");
+        if(it!=input_sections.end())
+            output_type+="1";
+    }
 
 
 
     if(input_sections[1]=="districts")
+    {
         output_type+="1";
-    if(input_sections[1]=="districts" && input_sections[3].empty())
-        output_type+='1';
+        auto it=find(input_sections.begin(), input_sections.end(),"district");
+        if(it!=input_sections.end())
+            output_type+="1";
+
+    }
     
     if(input_sections[1]=="restaurants")
+    {
         output_type+="2";
-    if(input_sections[1]=="restaurants" && input_sections[3].empty())
-        output_type+="1";
+        auto it=find(input_sections.begin(), input_sections.end(),"food_name");
+        if(it!=input_sections.end())
+            output_type+="1";
+    }
+    
 
     if(input_sections[1]=="restaurant_detail")
         output_type+="3";
 
     if(input_sections[1]=="reserves")
+    {
         output_type+="4";
-    if(input_sections[1]=="reserves" && input_sections[3].empty())
-        output_type+="5";
-    if(input_sections[1]=="reserves" && input_sections[5].empty())
-        output_type+="6";
+        
+        auto reserve_id=find(input_sections.begin(),input_sections.end(),"reserve_id");
+
+        if(reserve_id!=input_sections.end())
+            output_type+="3";
+        else
+            output_type+="2";
+     
+    }
+
 
     
 
@@ -665,11 +685,8 @@ int main(int argc , char* argv[])
     // User user;
     // user.set_district("Azadi");
     // get.show_info_restaurants("sib",app);
-    string line;
-    while (getline(cin,line))
-    {
-       cout<<CMD_CONTROLLER(line);
-    }
+    string line="GET reserves ?";
+    cout<<CMD_CONTROLLER(line);
     
 
 
