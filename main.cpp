@@ -555,7 +555,6 @@ public:
         }
         else
         {
-            
             show_restaurants_places(user,app,1,food_name);
         }
 
@@ -758,6 +757,20 @@ public:
 
     string Analysis_food_name(string & line)
     {
+        string output;
+        vector<string> line_token= split_by_space(line,DELIMITER_SPACE);
+        if(line_token.size()==3)
+        {
+            output=("NULL");
+            return output;
+        }
+        else
+        {
+            auto it=find(line_token.begin(),line_token.end(),"food_name");
+            it++;
+            output=(*it);
+            return output;
+        }
     
     }
 
@@ -790,7 +803,7 @@ void control_structure(char* argv[])
 
 
     string district_name;
-
+    string food_name;
     while (getline(cin,line))
     {
         type_of_CMD=CMD_CONTROLLER(line);
@@ -887,18 +900,40 @@ void control_structure(char* argv[])
             put.my_districts(district_name,cur_user,app);
             break;
 
-        case (SHOW_DISTRICT):
-            
-            
-
-
-            break;
+        case (SHOW_LIST_RESTAURANT):
+            if(app.restaurants.size()==0)
+            {
+                Errormsg.Empty();
+                break;
+            }
+            if(cur_user.get_district().size()==0)
+            {
+                Errormsg.Not_Found();
+                break;
+            }else
+            {
+                food_name=analysis.Analysis_food_name(line);
+                get.restaurants(food_name,cur_user,app);
+                break;
+            }
         
-        
 
-
-
-
+        case (SHOW_LIST_RESTAURANT_FULL):
+            if(app.restaurants.size()==0)
+            {
+                Errormsg.Empty();
+                break;
+            }
+            if(cur_user.get_district().size()==0)
+            {
+                Errormsg.Not_Found();
+                break;
+            }else
+            {
+                food_name=analysis.Analysis_food_name(line);
+                get.restaurants(food_name,cur_user,app);
+                break;
+            }
 
 
         default:
