@@ -234,7 +234,7 @@ class Dirstrict
 private:
     string name;
 public:
-
+    vector<Dirstrict> bfs_district;
     vector<string> neighbors;
     Dirstrict(vector<string> data_line)
     {
@@ -512,6 +512,20 @@ private:
         return 1;
 
     }
+
+
+
+    Dirstrict find_district_by_name(vector<Dirstrict> districts,string my_dis)
+    {
+        for(int i=0;i<districts.size();i++)
+        {
+            if(districts[i].get_name()==my_dis)
+                return districts[i];
+        }
+
+
+    }
+
 
     void show_restaurants_places(User& user , App& app,int type_cmd,string food_name)
     {
