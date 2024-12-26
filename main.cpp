@@ -657,22 +657,62 @@ void show_vector(vector<T> ex)
 
 
 
+class Analysis_input
+{
+private:
+    int status;
+public:
+    Analysis_input(){status=1;}
+
+    vector<string> Analysis_signup(string& line)
+    {
+        vector<string> output;
+        vector<string> line_token= split_by_space(line,DELIMITER_SPACE);
+
+        auto it=find(line_token.begin() , line_token.end(),"username");
+        it++;
+        output.push_back((*it));
+        it=find(line_token.begin(),line_token.end(),"password");
+        it++;
+        output.push_back((*it));
+    }
+
+
+};
+
+
+
+
+
+
 
 void control_structure(char* argv[])
 {
     App app;
     app.handle_input_data(argv,app);
 
+    int status_login=0;
+
     string line;
     int type_of_CMD;
 
     POST post;
     GET get;
-
+    User cur_user;
     while (getline(cin,line))
     {
         type_of_CMD=CMD_CONTROLLER(line);
+
+        switch (type_of_CMD)
+        {
+        case 11:
+            post.signup()
+            
+            break;
         
+        default:
+            break;
+        }
 
 
     }
