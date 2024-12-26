@@ -21,7 +21,12 @@ const int LOGIN_DEACTIVE=0;
 const int SIGNUP=11;
 const int LOGIN=12;
 const int LOGOUT=13;
-
+const int SHOW_DISTRICT=21;
+const int SHOW_DISTRICT_FULL=211;
+const int MY_DISTRICTS=31;
+const int UNKNOWN_CMD=-1;
+const int SHOW_LIST_RESTAURANT=22;
+const int SHOW_LIST_RESTAURANT_FULL=221;
 
 
 
@@ -77,6 +82,11 @@ int CMD_CONTROLLER(string line)
         output_type+="3";
     if(input_sections[0]==CMD_DELETE)
         output_type+="4";
+
+    if(output_type.size()==0)
+        return -1;
+    
+
     if(input_sections[1]=="signup")
         output_type+="1";
     if(input_sections[1]=="login")
@@ -226,7 +236,6 @@ private:
 public:
 
     vector<string> neighbors;
-
     Dirstrict(vector<string> data_line)
     {
         for(int i=0;i<data_line.size();i++)
@@ -348,6 +357,25 @@ private:
         file_district.close();  
     }
 
+    void update_district()
+    {
+        vector<string> names_district;
+        for(int i=0;i<dirstricts.size();i++)
+            names_district.push_back(dirstricts[i].get_name());
+        sort(names_district.begin(),names_district.end());
+
+        vector<Dirstrict> cpy_district;
+        for(int i=0;i<names_district.size();i++)
+        {
+            for(int j=0;j<dirstricts.size();j++)
+            {
+                if(dirstricts[j].get_name()==names_district[i])
+                    cpy_district.push_back(dirstricts[j]);
+            }
+        }
+        dirstricts=cpy_district;
+    }
+
 public:
     vector<User> users;
     vector<Restaurant> restaurants ;
@@ -369,7 +397,10 @@ public:
             cout<<"file is not open"<<endl;
         handle_restaurants(app,file_restaurants);
         handle_districts(app,file_districts);
+        update_district();
     }
+
+
 
 };
 
@@ -503,10 +534,10 @@ public:
     void districts(string name_district,App& app)
     {
         if(name_district=="NULL")
-            {
-                for(int i=0;i<app.dirstricts.size();i++)
-                    app.dirstricts[i].show_neighbor();
-            }
+        {
+            for(int i=0;i<app.dirstricts.size();i++)
+                app.dirstricts[i].show_neighbor();
+        }
         else
         {
             int status_districts=has_district(name_district,app.dirstricts);
@@ -515,18 +546,6 @@ public:
             else
                 Output_msg::Not_Found();
         }
-    }
-
-    void my_districts(string name_district , User& user,App& app)
-    {
-        int status_districts=has_district(name_district,app.dirstricts);
-        if(status_districts)
-        {
-            Output_msg::OK();
-            user.set_district(name_district);
-        }
-        else
-            Output_msg::Not_Found();
     }
 
     void restaurants(string food_name,User& user, App& app){
@@ -652,21 +671,33 @@ public:
     }
 
 
+};
 
+class PUT : public Output_msg
+{
+private:
+    int status;
+public:
+    PUT(){status=1;}
 
-
-
-
-
-
-
-
-
-
-
-
+    bool my_districts(string name_district , User& user,App& app)
+    {
+        int status_districts=has_district(name_district,app.dirstricts);
+        if(status_districts)
+        {
+            Output_msg::OK();
+            user.set_district(name_district);
+            return true;
+        }
+        else
+        {
+            Output_msg::Not_Found();
+            return false;
+        }
+    }
 
 };
+
 
 
 
@@ -676,7 +707,6 @@ void show_vector(vector<T> ex)
     for(int i=0;i<ex.size();i++)
         cout<<ex[i]<<endl;
 }
-
 
 
 class Analysis_input
@@ -708,6 +738,30 @@ public:
         return output;
     }
 
+    string Analysis_district(string &line)
+    {
+        string output;
+        vector<string> line_token= split_by_space(line,DELIMITER_SPACE);
+        if(line_token.size()==3)
+        {
+            output=("NULL");
+            return output;
+        }
+        else
+        {
+            auto it=find(line_token.begin(),line_token.end(),"district");
+            it++;
+            output=(*it);
+            return output;
+        }
+    }
+
+    string Analysis_food_name(string & line)
+    {
+    
+    }
+
+
 };
 
 
@@ -729,15 +783,27 @@ void control_structure(char* argv[])
     POST post;
     GET get;
     User cur_user;
+    PUT put;
 
     Output_msg Errormsg;
     Analysis_input analysis;
 
 
+    string district_name;
+
     while (getline(cin,line))
     {
         type_of_CMD=CMD_CONTROLLER(line);
         
+        if(type_of_CMD==UNKNOWN_CMD)
+        {
+            Errormsg.Bad_Request();
+            continue;
+        }
+
+
+
+
         switch (type_of_CMD)
         {
         case SIGNUP:
@@ -798,9 +864,52 @@ void control_structure(char* argv[])
 
         if(status_login==0)
             continue;
+
+        switch (type_of_CMD)
+        {
+        case (SHOW_DISTRICT) : 
+            if(app.dirstricts.size()==0)
+                Errormsg.Empty();
+            else
+                get.districts("NULL",app);
+            break;
+        
+
+        case (SHOW_DISTRICT_FULL):
+            if(app.dirstricts.size()==0)
+                Errormsg.Empty();
+            else
+                get.districts(analysis.Analysis_district(line),app);
+            break;
+
+        case (MY_DISTRICTS):
+            district_name=analysis.Analysis_district(line);   
+            put.my_districts(district_name,cur_user,app);
+            break;
+
+        case (SHOW_DISTRICT):
+            
+            
+
+
+            break;
+        
+        
+
+
+
+
+
+
+        default:
+            break;
+        }
         
 
         
+        
+
+
 
     }
     
