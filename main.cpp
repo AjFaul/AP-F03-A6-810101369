@@ -7,9 +7,102 @@
 using namespace std;
 
 const char DELIMITER='/';
+const string CMD_POST="POST";
+const string CMD_GET="GET";
+const string CMD_PUT="PUT";
+const string CMD_DELETE="DELETE";
+const char DELIMITER_SPACE=' ';
+
+void update_with_slash(string& line)
+{
+    for(int i=0;i<line.size() ; i++)
+    {
+        if(line[i] == ';' || line[i]== ',' || line[i]==':')
+            line[i]='/';
+    }
+}
+
+vector<string>  split(string Line,char DELIMITER)
+{
+    update_with_slash(Line);
+    istringstream ss(Line);
+    string token;
+    vector<string> inputSection;
+    while (getline(ss,token,DELIMITER)){
+        inputSection.push_back(token);
+    }
+    return inputSection;
+}
+
+vector<string>  split_by_space(string Line,char DELIMITER)
+{
+    istringstream ss(Line);
+    string token;
+    vector<string> inputSection;
+    while (getline(ss,token,DELIMITER)){
+        inputSection.push_back(token);
+    }
+    return inputSection;
+}
+
+
+int CMD_CONTROLLER(string line)
+{
+    vector<string> input_sections;
+    split_by_space(line,DELIMITER_SPACE);
+    string output_type;
+    if(input_sections[0]==CMD_POST)
+        output_type+="1";
+    if(input_sections[0]==CMD_GET)
+        output_type+="2";
+    if(input_sections[0]==CMD_PUT)
+        output_type+="3";
+    if(input_sections[0]==CMD_DELETE)
+        output_type+="4";
+
+
+    if(input_sections[1]=="signup")
+        output_type+="1";
+    if(input_sections[1]=="login")
+        output_type+="2";
+    if(input_sections[1]=="logout")
+        output_type+="3";
+
+    if(input_sections[1]=="reserve")
+        output_type+="4"; 
+    if(input_sections[1]=="reserve" && input_sections[11].empty())
+        output_type+="1"; 
 
 
 
+    if(input_sections[1]=="districts")
+        output_type+="1";
+    if(input_sections[1]=="districts" && input_sections[3].empty())
+        output_type+='1';
+    
+    if(input_sections[1]=="restaurants")
+        output_type+="2";
+    if(input_sections[1]=="restaurants" && input_sections[3].empty())
+        output_type+="1";
+
+    if(input_sections[1]=="restaurant_detail")
+        output_type+="3";
+
+    if(input_sections[1]=="reserves")
+        output_type+="4";
+    if(input_sections[1]=="reserves" && input_sections[3].empty())
+        output_type+="5";
+    if(input_sections[1]=="reserves" && input_sections[5].empty())
+        output_type+="6";
+
+    
+
+    if(input_sections[1]=="my_district")
+        output_type+="1";
+
+
+    return stoi(output_type);     
+}
 
 
 class Reserve
@@ -494,47 +587,11 @@ public:
 };
 
 
-// class DELETE : public Output_msg
-// {
-// private:
-//     int status=0;
-// public:
-//     DELETE(){status=1;}
-
-//     bool reserve(string name_rest , int ID  , User user , )
-// };
 
 
 
 
 
-
-
-
-
-
-
-void update_with_slash(string& line)
-{
-    for(int i=0;i<line.size() ; i++)
-    {
-        if(line[i] == ';' || line[i]== ',' || line[i]==':')
-            line[i]='/';
-    }
-
-}
-
-vector<string>  split(string Line,char DELIMITER)
-{
-    update_with_slash(Line);
-    istringstream ss(Line);
-    string token;
-    vector<string> inputSection;
-    while (getline(ss,token,DELIMITER)){
-        inputSection.push_back(token);
-    }
-    return inputSection;
-}
 
 void handle_restaurants(App& app,ifstream& file_restaurants)
 {
@@ -601,13 +658,19 @@ void handle_input_data(char* argv[],App& app)
 
 int main(int argc , char* argv[])
 {
-    App app;
-    handle_input_data(argv,app);
+    // App app;
+    // handle_input_data(argv,app);
     
-    GET get;
-    User user;
-    user.set_district("Azadi");
-    get.show_info_restaurants("sib",app);
+    // GET get;
+    // User user;
+    // user.set_district("Azadi");
+    // get.show_info_restaurants("sib",app);
+    string line;
+    while (getline(cin,line))
+    {
+       cout<<CMD_CONTROLLER(line);
+    }
+    
 
 
 }
