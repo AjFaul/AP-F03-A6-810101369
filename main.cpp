@@ -20,7 +20,7 @@ const int LOGIN_DEACTIVE=0;
 
 const int SIGNUP=11;
 const int LOGIN=12;
-
+const int LOGOUT=13;
 
 
 
@@ -701,7 +701,12 @@ public:
         return output;
     }
 
-
+    vector<string> two_cmd(string& line)
+    {
+        vector<string> output;
+        output=split_by_space(line,DELIMITER_SPACE);
+        return output;
+    }
 
 };
 
@@ -767,30 +772,35 @@ void control_structure(char* argv[])
                 {
                     cur_user=app.users[number-1];
                     status_login=1;
+                    Errormsg.OK();
                 }
                 
             }
-
-
-
-
-
             break;
-
-
-
-
-
-
-
-
-
-
+        case LOGOUT:
+            if(status_login=0)
+                Errormsg.Permission_Denied();
+            else
+                {
+                    vector<string> logout_line=analysis.two_cmd(line);
+                    if(logout_line[1]=="logout")
+                    {
+                        status_login=0;
+                        Errormsg.OK();
+                        break;
+                    }else
+                        Errormsg.Bad_Request(); 
+                }
+            break;
         default:
             break;
         }
 
+        if(status_login==0)
+            continue;
+        
 
+        
 
     }
     
