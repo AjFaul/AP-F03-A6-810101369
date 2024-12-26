@@ -61,15 +61,12 @@ int CMD_CONTROLLER(string line)
         output_type+="3";
     if(input_sections[0]==CMD_DELETE)
         output_type+="4";
-
-
     if(input_sections[1]=="signup")
         output_type+="1";
     if(input_sections[1]=="login")
         output_type+="2";
     if(input_sections[1]=="logout")
         output_type+="3";
-
     if(input_sections[1]=="reserve")
     {
         output_type+="4"; 
@@ -77,18 +74,13 @@ int CMD_CONTROLLER(string line)
         if(it!=input_sections.end())
             output_type+="1";
     }
-
-
-
     if(input_sections[1]=="districts")
     {
         output_type+="1";
         auto it=find(input_sections.begin(), input_sections.end(),"district");
         if(it!=input_sections.end())
             output_type+="1";
-
     }
-    
     if(input_sections[1]=="restaurants")
     {
         output_type+="2";
@@ -96,22 +88,16 @@ int CMD_CONTROLLER(string line)
         if(it!=input_sections.end())
             output_type+="1";
     }
-    
-
     if(input_sections[1]=="restaurant_detail")
         output_type+="3";
-
     if(input_sections[1]=="reserves")
     {
         output_type+="4";
-        
         auto reserve_id=find(input_sections.begin(),input_sections.end(),"reserve_id");
-
         if(reserve_id!=input_sections.end())
             output_type+="3";
         else
             output_type+="2";
-     
     }
 
 
@@ -307,6 +293,45 @@ class App
 {
 private:
     int status_app;
+
+    void handle_restaurants(App& app,ifstream& file_restaurants)
+    {
+        string line;
+        int num_line=0;
+        vector<string>data_line;
+        while (getline(file_restaurants,line))
+        {
+            if(num_line==0)
+            {
+                num_line++;
+                continue;
+            }
+            data_line=split(line,DELIMITER);
+            Restaurant restaurant(data_line);
+            app.Add_restaurant(restaurant);
+
+        }
+        file_restaurants.close();
+    }
+
+    void handle_districts(App& app,ifstream& file_district){
+        string line;
+        int num_line=0;
+        vector<string> data_line;
+        while (getline(file_district,line))
+        {
+            if(num_line==0)
+            {
+                num_line++;
+                continue;
+            }
+            data_line=split(line,DELIMITER);
+            Dirstrict dirstrict(data_line);
+            app.Add_district(dirstrict);
+        }
+        file_district.close();  
+    }
+
 public:
     vector<User> users;
     vector<Restaurant> restaurants ;
@@ -315,6 +340,21 @@ public:
     void Add_restaurant(Restaurant restaurant){restaurants.push_back(restaurant);}
     void Add_district(Dirstrict district){dirstricts.push_back(district);}
     void Add_user(string username , string password){users.push_back(User(username , password));}
+
+    void handle_input_data(char* argv[],App& app)
+    {
+        string name_file_restaurants=argv[1];
+        string name_file_districts=argv[2];
+        ifstream file_restaurants(name_file_restaurants);
+        if(!file_restaurants.is_open())
+            cout<<"file is not open"<<endl;
+        ifstream file_districts(name_file_districts);
+        if(!file_districts.is_open())
+            cout<<"file is not open"<<endl;
+        handle_restaurants(app,file_restaurants);
+        handle_districts(app,file_districts);
+    }
+
 };
 
 class Output_msg
@@ -608,68 +648,50 @@ public:
 
 
 
-
-
-
-
-
-void handle_restaurants(App& app,ifstream& file_restaurants)
+template<typename T>
+void show_vector(vector<T> ex)
 {
+    for(int i=0;i<ex.size();i++)
+        cout<<ex[i];
+}
+
+
+
+
+void control_structure(char* argv[])
+{
+    App app;
+    app.handle_input_data(argv,app);
+
     string line;
-    int num_line=0;
-    vector<string>data_line;
-    while (getline(file_restaurants,line))
+    int type_of_CMD;
+
+    POST post;
+    GET get;
+
+    while (getline(cin,line))
     {
-        if(num_line==0)
-        {
-            num_line++;
-            continue;
-        }
-        data_line=split(line,DELIMITER);
-        Restaurant restaurant(data_line);
-        app.Add_restaurant(restaurant);
+        type_of_CMD=CMD_CONTROLLER(line);
+        
+
 
     }
-    file_restaurants.close();
-}
-
-void handle_districts(App& app,ifstream& file_district){
-    string line;
-    int num_line=0;
-    vector<string> data_line;
-    while (getline(file_district,line))
-    {
-        if(num_line==0)
-        {
-            num_line++;
-            continue;
-        }
-        data_line=split(line,DELIMITER);
-        Dirstrict dirstrict(data_line);
-        app.Add_district(dirstrict);
-    }
-    file_district.close();
     
-}
 
-void handle_input_data(char* argv[],App& app)
-{
-    string name_file_restaurants=argv[1];
-    string name_file_districts=argv[2];
-    
-    ifstream file_restaurants(name_file_restaurants);
-    if(!file_restaurants.is_open())
-        cout<<"file is not open"<<endl;
-
-    ifstream file_districts(name_file_districts);
-    if(!file_districts.is_open())
-        cout<<"file is not open"<<endl;
-
-    handle_restaurants(app,file_restaurants);
-    handle_districts(app,file_districts);
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -678,15 +700,7 @@ void handle_input_data(char* argv[],App& app)
 
 int main(int argc , char* argv[])
 {
-    // App app;
-    // handle_input_data(argv,app);
-    
-    // GET get;
-    // User user;
-    // user.set_district("Azadi");
-    // get.show_info_restaurants("sib",app);
-    string line="GET reserves ?";
-    cout<<CMD_CONTROLLER(line);
+    control_structure(argv);
     
 
 
