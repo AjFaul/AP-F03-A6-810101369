@@ -14,6 +14,22 @@ const string CMD_GET="GET";
 const string CMD_PUT="PUT";
 const string CMD_DELETE="DELETE";
 const char DELIMITER_SPACE=' ';
+const int LOGIN_ACTIVE=1;
+const int LOGIN_DEACTIVE=0;
+
+
+const int SIGNUP=11;
+const int LOGIN=12;
+
+
+
+
+
+
+
+
+
+
 
 void update_with_slash(string& line)
 {
@@ -389,12 +405,18 @@ private:
 public:
     POST(){status_post=1;}
 
-    void signup(string username , string password,App& app)
+    bool signup(string username , string password,App& app)
     {
         if(has_username(username, app.users))
+        {
             Output_msg::Bad_Request();
+            return false;
+        }
         else
+        {
             app.users.push_back(User(username,password));
+            return true;
+        }
     }
 
     int login(string username, string password,App& app)
@@ -403,7 +425,7 @@ public:
         if(has_user)   
         {
             if(app.users[has_user-1].get_password() == password)
-                return 1;
+                return (has_user);
             else
                 {
                     Output_msg::Permission_Denied();
@@ -652,7 +674,7 @@ template<typename T>
 void show_vector(vector<T> ex)
 {
     for(int i=0;i<ex.size();i++)
-        cout<<ex[i];
+        cout<<ex[i]<<endl;
 }
 
 
@@ -662,9 +684,10 @@ class Analysis_input
 private:
     int status;
 public:
+
     Analysis_input(){status=1;}
 
-    vector<string> Analysis_signup(string& line)
+    vector<string> Analysis_username_pass(string& line)
     {
         vector<string> output;
         vector<string> line_token= split_by_space(line,DELIMITER_SPACE);
@@ -675,7 +698,9 @@ public:
         it=find(line_token.begin(),line_token.end(),"password");
         it++;
         output.push_back((*it));
+        return output;
     }
+
 
 
 };
@@ -699,20 +724,72 @@ void control_structure(char* argv[])
     POST post;
     GET get;
     User cur_user;
+
+    Output_msg Errormsg;
+    Analysis_input analysis;
+
+
     while (getline(cin,line))
     {
         type_of_CMD=CMD_CONTROLLER(line);
-
+        
         switch (type_of_CMD)
         {
-        case 11:
-            post.signup()
-            
+        case SIGNUP:
+
+            if(status_login==LOGIN_ACTIVE)
+                Errormsg.Permission_Denied();
+            else
+            {
+                vector<string> username_pass=analysis.Analysis_username_pass(line);
+                if(post.signup(username_pass[0],username_pass[1],app))
+                {
+                    cur_user=app.users[app.users.size()-1];
+                    status_login=1;
+                    Errormsg.OK();
+                }
+                else
+                    break;
+            }
             break;
         
+        case LOGIN:
+            if(status_login==1)
+            {
+                Errormsg.Permission_Denied();
+                break;
+            }
+            else
+            {
+                vector<string> username_pass=analysis.Analysis_username_pass(line);
+                int number=post.login(username_pass[0],username_pass[1],app);
+                if(number)
+                {
+                    cur_user=app.users[number-1];
+                    status_login=1;
+                }
+                
+            }
+
+
+
+
+
+            break;
+
+
+
+
+
+
+
+
+
+
         default:
             break;
         }
+
 
 
     }
