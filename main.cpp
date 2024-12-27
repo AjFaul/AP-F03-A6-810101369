@@ -527,19 +527,33 @@ private:
     }
 
 
-    void show_restaurants_places(User& user , App& app,int type_cmd,string food_name)
+    bool find_food_in_restaurants(string name_food , map<string ,int> food_price)
     {
-        for(int i=0;i<app.dirstricts.size();i++)
+        for(auto it=food_price.begin(); it!=food_price.end() , it++)
         {
-            if(app.dirstricts[i].get_name() == user.get_district())
-            {
-                find_restaurants_by_place(user.get_district(),app ,type_cmd , food_name ); //
-                for(int j=0 ;j<app.dirstricts[i].neighbors.size();j++)
-                    find_restaurants_by_place(app.dirstricts[i].neighbors[j],app,type_cmd , food_name );
+            if((*it).first==name_food)
+                return 1;
+        }
+        return 0;
+    }
 
-                break;
+
+    
+
+    void show_restaurants_places(vector<string> visited , App& app,string name_food)
+    {
+        for(int i=0;i<visited.size();i++)
+        {
+            for(int j=0;j<app.restaurants.size();j++)
+            {
+                if(app.restaurants[j].get_district()==visited[i])
+                {
+                    if(find_food_in_restaurants(name_food , app.restaurants[i].menu_item))
+
+                }
             }
-        } 
+        }
+        
     }
 
 public:
