@@ -111,7 +111,7 @@ int CMD_CONTROLLER(string line)
     {
         output_type+="2";
         auto it=find(input_sections.begin(), input_sections.end(),"food_name");
-        if(it!=input_sections.end())
+        if(it==input_sections.end())
             output_type+="1";
     }
     if(input_sections[1]=="restaurant_detail")
@@ -506,13 +506,13 @@ private:
         
         for(int i=0;i<app.restaurants.size();i++)
         {
+            // cout<<app.restaurants[i].menu_item[food_name]<<endl;
             if(name_place==app.restaurants[i].get_district() && (!type_cmd || (app.restaurants[i].menu_item[food_name]!=0)))
                 cout<<app.restaurants[i].get_name()<<" ("<<name_place<<")"<<endl;
         }
         return 1;
 
     }
-
 
 
     Dirstrict find_district_by_name(vector<Dirstrict> districts,string my_dis)
@@ -533,7 +533,7 @@ private:
         {
             if(app.dirstricts[i].get_name() == user.get_district())
             {
-                find_restaurants_by_place(user.get_district(),app ,type_cmd , food_name );
+                find_restaurants_by_place(user.get_district(),app ,type_cmd , food_name ); //
                 for(int j=0 ;j<app.dirstricts[i].neighbors.size();j++)
                     find_restaurants_by_place(app.dirstricts[i].neighbors[j],app,type_cmd , food_name );
 
@@ -792,7 +792,49 @@ public:
 };
 
 
+Dirstrict find_by_name(string name,App& app)
+{
+    for(int i=0;i<app.dirstricts.size();i++)
+    {
+        if(app.dirstricts[i].get_name()==name)
+            return app.dirstricts[i];
+    }
+    vector<string> data_dummy={name};
+    Dirstrict dummy(data_dummy);
+    return dummy;
+}
 
+bool check_visited(string name, vector<string>& visited)
+{
+    for(int i=0;i<visited.size();i++)
+    {
+        if(name==visited[i])
+            return 0;
+    }
+    return 1;
+}
+
+
+vector<string> bfs_function (vector<string> neighbors,vector<string>& visited,App& app){
+    int number_of_new_visited=0;
+    vector <string> new_neighbor;
+    for(int i=0;i<neighbors.size();i++)
+    {
+        Dirstrict cur_dis=find_by_name(neighbors[i],app);
+        for(int j=0;j<cur_dis.neighbors.size();j++)
+        {
+            if(check_visited(cur_dis.neighbors[j],visited))
+            {
+                new_neighbor.push_back(cur_dis.neighbors[j]);
+                visited.push_back(cur_dis.neighbors[j]);
+                number_of_new_visited++;
+            }
+        }
+    }
+    if(number_of_new_visited==0)
+        return visited;
+    return bfs_function(new_neighbor,visited,app);
+}
 
 
 
@@ -818,8 +860,11 @@ void control_structure(char* argv[])
 
     string district_name;
     string food_name;
+
     while (getline(cin,line))
     {
+
+        vector<string> visited;
         type_of_CMD=CMD_CONTROLLER(line);
         
         if(type_of_CMD==UNKNOWN_CMD)
@@ -892,6 +937,13 @@ void control_structure(char* argv[])
         if(status_login==0)
             continue;
 
+
+
+        // cout<<type_of_CMD<<endl;
+
+
+
+
         switch (type_of_CMD)
         {
         case (SHOW_DISTRICT) : 
@@ -914,24 +966,23 @@ void control_structure(char* argv[])
             put.my_districts(district_name,cur_user,app);
             break;
 
-        case (SHOW_LIST_RESTAURANT):
-            if(app.restaurants.size()==0)
-            {
-                Errormsg.Empty();
-                break;
-            }
-            if(cur_user.get_district().size()==0)
-            {
-                Errormsg.Not_Found();
-                break;
-            }else
-            {
-                food_name=analysis.Analysis_food_name(line);
-                get.restaurants(food_name,cur_user,app);
-                break;
-            }
+        // case (SHOW_LIST_RESTAURANT):
+        //     if(app.restaurants.size()==0)
+        //     {
+        //         Errormsg.Empty();
+        //         break;
+        //     }
+        //     if(cur_user.get_district().size()==0)
+        //     {
+        //         Errormsg.Not_Found();
+        //         break;
+        //     }else
+        //     {
+        //         food_name=analysis.Analysis_food_name(line);
+        //         get.restaurants(food_name,cur_user,app);
+        //         break;
+        //     }
         
-
         case (SHOW_LIST_RESTAURANT_FULL):
             if(app.restaurants.size()==0)
             {
@@ -944,8 +995,7 @@ void control_structure(char* argv[])
                 break;
             }else
             {
-                food_name=analysis.Analysis_food_name(line);
-                get.restaurants(food_name,cur_user,app);
+                bfs_function({cur_user.get_district()} , visited, app);
                 break;
             }
 
