@@ -538,7 +538,10 @@ private:
     }
 
 
-    
+    void write_restaurant_place(Restaurant my_res)
+    {
+        cout<<my_res.get_name()<<" ("<<my_res.get_district()<<")"<<endl;
+    }
 
     void show_restaurants_places(vector<string> visited , App& app,string name_food)
     {
