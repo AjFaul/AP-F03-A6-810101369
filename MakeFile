@@ -1,0 +1,23 @@
+# Makefile
+
+# Compiler
+CXX = g++
+
+# Compiler flags
+CXXFLAGS = -Wall -Wextra -std=c++17
+
+# Target executable
+TARGET = UTaste
+
+# Source file
+SRC = main.cpp
+
+# Default rule
+all: $(TARGET)
+
+$(TARGET): $(SRC)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC)
+
+# Clean rule
+clean:
+	rm -f $(TARGET)
