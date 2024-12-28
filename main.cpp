@@ -14,6 +14,7 @@ const string CMD_GET="GET";
 const string CMD_PUT="PUT";
 const string CMD_DELETE="DELETE";
 const char DELIMITER_SPACE=' ';
+const char DELIMITER_COMMA=',';
 const int LOGIN_ACTIVE=1;
 const int LOGIN_DEACTIVE=0;
 
@@ -27,6 +28,9 @@ const int MY_DISTRICTS=31;
 const int UNKNOWN_CMD=-1;
 const int SHOW_LIST_RESTAURANT=22;
 const int SHOW_LIST_RESTAURANT_FULL=221;
+const int RESTAURANT_DETAIL=23;
+const int RESERVE_WITH_FOOD=14;
+const int RESERVE_WITHOUT_FOOD=141;
 
 
 
@@ -97,7 +101,7 @@ int CMD_CONTROLLER(string line)
     {
         output_type+="4"; 
         auto it =find(input_sections.begin() , input_sections.end() , "foods");
-        if(it!=input_sections.end())
+        if(it==input_sections.end())
             output_type+="1";
     }
     if(input_sections[1]=="districts")
@@ -529,7 +533,7 @@ private:
 
     bool find_food_in_restaurants(string name_food , map<string ,int> food_price)
     {
-        for(auto it=food_price.begin(); it!=food_price.end() , it++)
+        for(auto it=food_price.begin(); it!=food_price.end() ; it++)
         {
             if((*it).first==name_food)
                 return 1;
@@ -538,12 +542,12 @@ private:
     }
 
 
-    void write_restaurant_place(Restaurant my_res)
+    void write_restaurant_place(Restaurant& my_res)
     {
         cout<<my_res.get_name()<<" ("<<my_res.get_district()<<")"<<endl;
     }
 
-    void show_restaurants_places(vector<string> visited , App& app,string name_food)
+    void show_restaurants_places(vector<string> visited , App& app,string name_food,bool type_cmd)
     {
         for(int i=0;i<visited.size();i++)
         {
@@ -551,8 +555,8 @@ private:
             {
                 if(app.restaurants[j].get_district()==visited[i])
                 {
-                    if(find_food_in_restaurants(name_food , app.restaurants[i].menu_item))
-
+                    if(find_food_in_restaurants(name_food , app.restaurants[j].menu_item) || (!type_cmd))
+                        write_restaurant_place(app.restaurants[j]);
                 }
             }
         }
@@ -579,14 +583,14 @@ public:
         }
     }
 
-    void restaurants(string food_name,User& user, App& app){
+    void restaurants(vector<string> visited, App& app,string food_name){
         if(food_name=="NULL")
         {
-            show_restaurants_places(user,app,0,food_name);
+            show_restaurants_places(visited,app,food_name,false);
         }
         else
         {
-            show_restaurants_places(user,app,1,food_name);
+            show_restaurants_places(visited,app,food_name,true);
         }
 
     }
@@ -609,7 +613,8 @@ public:
     bool reserve(string rest_name , int table_id, int s_time, int e_time ,string food_name, User& user, App& app,int res_id, int price,string district, int num_reserve)
     {
         Reserve new_res=Reserve(food_name,s_time,e_time,res_id,price ,table_id, rest_name, district, num_reserve);
-        for (int i=0;i<app.restaurants.size();i++)
+        int i;
+        for (i=0;i<app.restaurants.size();i++)
         {
             if( rest_name== app.restaurants[i].get_name())
             {
@@ -633,6 +638,7 @@ public:
                         return false;
                     }
                 }
+                break;
             }
         }
         if(new_res.conflict_by_own(user))
@@ -640,9 +646,11 @@ public:
             Output_msg::Permission_Denied();
             return false;
         }
+        app.restaurants[i].reserves.push_back(new_res);
         cout<<"Reserve ID: "<<res_id<<endl;
         cout<<"Table "<<table_id<<" for "<<s_time<<" to "<<e_time<<" in "<<rest_name<<endl;
         cout<<"Price: "<<price<<endl;
+        return 1;
     }
 
 
@@ -728,6 +736,20 @@ public:
 
 };
 
+class DELETE
+{
+private:
+    int status;
+public:
+    DELETE(){status=1;}
+
+    void delete_func(User &user,App& app)
+    {
+        user.reserves.pop_back();
+    }
+};
+
+
 
 
 
@@ -743,6 +765,19 @@ class Analysis_input
 {
 private:
     int status;
+
+
+    bool check_type(vector<string> name_list,string next_name)
+    {
+        for(int i=0;i<name_list.size();i++)
+        {
+            if(next_name==name_list[i])
+                return 0;
+        }
+        return 1;
+    }
+
+
 public:
 
     Analysis_input(){status=1;}
@@ -802,8 +837,104 @@ public:
             output=(*it);
             return output;
         }
-    
     }
+
+
+
+    vector<string> Analysis_on_food(string foods)
+    {
+        vector<string> output=split_by_space(foods,DELIMITER_COMMA);
+        return output;
+    }
+    
+
+
+    vector<string> Analysis_reserve(string& line)
+    {
+        vector<string>output;
+        vector<string> token;
+        token=split_by_space(line,DELIMITER_SPACE);
+        string extra;
+        vector<string> list_name={"reserve","restaurant_name","table_id","start_time","end_time","foods"};
+        auto it=find(token.begin(), token.end(),"restaurant_name");
+        it++;
+        while (check_type(list_name,(*it)))
+        {
+            extra+=(*it);
+            it++;
+            if(check_type(list_name,(*it)))
+                extra+=" ";
+            if(it==token.end())
+                break;
+        }
+        output.push_back(extra);
+        extra="";
+
+        
+        it=find(token.begin(), token.end(),"table_id");
+        it++;
+        while (check_type(list_name,(*it)))
+        {
+            extra+=(*it);
+            it++;
+            if(it==token.end())
+                break;
+        }
+        output.push_back(extra);
+        extra="";
+
+
+        it=find(token.begin(), token.end(),"start_time");
+        it++;
+        while (check_type(list_name,(*it)))
+        {
+            extra+=(*it);
+            it++;
+            if(it==token.end())
+                break;
+        }
+        output.push_back(extra);
+        extra="";
+
+
+
+        it=find(token.begin(), token.end(),"end_time");
+        it++;
+        while (check_type(list_name,(*it)))
+        {
+            extra+=(*it);
+            it++;
+            if(it==token.end())
+                break;
+        }
+        output.push_back(extra);
+        extra="";
+
+        it=find(token.begin(), token.end(),"foods");
+        if(it==token.end())
+            return output;
+        it++;
+
+        while (check_type(list_name,(*it)))
+        {
+            extra+=(*it);
+            it++;
+            if(it==token.end())
+                break;
+        }
+
+
+        vector<string> foods_list=Analysis_on_food(extra);
+        for(int i=0;i<foods_list.size();i++)
+        {
+            output.push_back(foods_list[i]);
+        }
+        return output;
+
+    }
+
+
+
 
 
 };
@@ -877,6 +1008,7 @@ void control_structure(char* argv[])
 
     string district_name;
     string food_name;
+    vector<string> line_tokens;
 
     while (getline(cin,line))
     {
@@ -961,6 +1093,7 @@ void control_structure(char* argv[])
 
 
 
+
         switch (type_of_CMD)
         {
         case (SHOW_DISTRICT) : 
@@ -983,38 +1116,62 @@ void control_structure(char* argv[])
             put.my_districts(district_name,cur_user,app);
             break;
 
-        // case (SHOW_LIST_RESTAURANT):
-        //     if(app.restaurants.size()==0)
-        //     {
-        //         Errormsg.Empty();
-        //         break;
-        //     }
-        //     if(cur_user.get_district().size()==0)
-        //     {
-        //         Errormsg.Not_Found();
-        //         break;
-        //     }else
-        //     {
-        //         food_name=analysis.Analysis_food_name(line);
-        //         get.restaurants(food_name,cur_user,app);
-        //         break;
-        //     }
-        
-        case (SHOW_LIST_RESTAURANT_FULL):
+        case (SHOW_LIST_RESTAURANT):
             if(app.restaurants.size()==0)
             {
                 Errormsg.Empty();
                 break;
             }
+
             if(cur_user.get_district().size()==0)
             {
                 Errormsg.Not_Found();
                 break;
             }else
             {
+                visited.push_back(cur_user.get_district());
+                food_name=analysis.Analysis_food_name(line);
                 bfs_function({cur_user.get_district()} , visited, app);
+                get.restaurants(visited,app,food_name);
                 break;
             }
+
+            break;
+
+
+        case (SHOW_LIST_RESTAURANT_FULL):
+            if(app.restaurants.size()==0)
+            {
+                Errormsg.Empty();
+                break;
+            }
+
+            if(cur_user.get_district().size()==0)
+            {
+                Errormsg.Not_Found();
+                break;
+            }else
+            {
+                visited.push_back(cur_user.get_district());
+                food_name=analysis.Analysis_food_name(line);
+                bfs_function({cur_user.get_district()} , visited, app);
+                get.restaurants(visited,app,food_name);
+                break;
+            }
+            break;
+
+        // case(RESTAURANT_DETAIL):
+
+        //     break;
+
+
+        case(RESERVE_WITH_FOOD):
+            line_tokens=analysis.Analysis_reserve(line);
+
+
+            break;
+
+
 
 
         default:
