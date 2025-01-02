@@ -456,6 +456,52 @@ public:
         return false;
     }
 
+    bool check_visited(string name, vector<string>& visited)
+    {
+        for(int i=0;i<visited.size();i++)
+        {
+            if(name==visited[i])
+                return true;
+        }
+        return false;
+    }
+
+    District find_district(string name, App& app)
+    {
+        for(int i=0;i<app.distritcs.size();i++)
+        {
+            if(app.distritcs[i].get_name()==name)
+                return app.distritcs[i];
+        }
+        vector<string> data_dummy={name};
+        District dummy(data_dummy);
+        return dummy;
+    }
+
+    vector<string> bfs_function(vector<string>& neighbors , vector<string>&visited , App &app)
+    {
+        int number_of_new_visited=0;
+        vector<string> new_neighbors;
+        for(int i=0;i<neighbors.size();i++)
+        {
+            District cur_district=find_district(neighbors[i],app);
+            for(int j=0;j<cur_district.neighbors.size();j++)
+            {
+                if(check_visited(cur_district.neighbors[j],visited))
+                {
+                    new_neighbors.push_back(cur_district.neighbors[j]);
+                    visited.push_back(cur_district.neighbors[j]);
+                    number_of_new_visited++;
+                }
+            }
+        }
+        if(number_of_new_visited==0)
+            return visited;
+        return bfs_function(new_neighbors,visited,app);
+    }
+
+
+
 };
 
 
@@ -716,30 +762,15 @@ void control_structure(char* argv[])
     Server server;
     int cmd_type;
     int login_status=0;
-
-
     while (getline(cin,line))
     {
-
         cmd_type=analysis.CMD_CONTROLLER(line);
         // cout<<cmd_type<<endl;
         if(cmd_type==WRONG_CMD)
             break;
         server.set_Server(cmd_type,line);
         server.check(app,login_status);
-
-
-
-
-
-
-
-    }
-
-
-    
-    
-    
+    }   
 }
 
 
