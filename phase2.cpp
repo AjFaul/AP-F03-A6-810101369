@@ -16,6 +16,30 @@ const string CMD_PUT="PUT";
 const string CMD_DELETE="DELETE";
 
 
+const int WRONG_CMD=-1;
+const int CMD_SIGNUP=11;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void update_with_slash(string& line)
 {
     for(int i=0;i<line.size() ; i++)
@@ -49,11 +73,27 @@ vector<string>  split_by_space(string Line,char DELIMITER)
 }
 
 
+class Output_msg
+{
+private:
+    int status=0;
+    void OK(){ cout<<"OK"<<endl;}
+    void Empty(){cout<<"Empty"<<endl;}
+    void Not_Found(){cout<<"Not Found"<<endl;}
+    void Bad_Request(){cout<<"Bad_Request"<<endl;}
+    void Permission_Denied(){cout<<"Permission_Denied"<<endl;}
+    friend class Analysis_input;
+public:
+    Output_msg(){status=1;}
+};
+
+
 
 class Analysis_input
 {
 private:
     int status;
+    Output_msg err;
 public:
     Analysis_input(/* args */){status=1;}
 
@@ -71,7 +111,10 @@ public:
 
         // lev set 0 is ok?
         if(output_type.size()==0)
+        {
+            err.Not_Found();
             return -1;
+        }
 
 
         // lev set 1
@@ -82,13 +125,6 @@ public:
 
 
     }
-
-
-
-
-
-
-
 
 
 
@@ -115,19 +151,6 @@ public:
 };
 
 
-
-class Output_msg
-{
-private:
-    int status=0;
-    void OK(){ cout<<"OK"<<endl;}
-    void Empty(){cout<<"Empty"<<endl;}
-    void Not_Found(){cout<<"Not Found"<<endl;}
-    void Bad_Request(){cout<<"Bad_Request"<<endl;}
-    void Permission_Denied(){cout<<"Permission_Denied"<<endl;}
-public:
-    Output_msg(){status=1;}
-};
 
 
 class Reserve
@@ -364,11 +387,47 @@ private:
 
 
 
+
+
+    friend class Server;
 public:
     POST(/* args */){status=1;}
 
 };
 
+
+
+class Server
+{
+private:
+    int type_cmd;
+    string line;
+
+    void signup_server(App& app)
+    {
+        Analysis_input analysis;
+        POST post;
+        vector<string> line_tokens=analysis.Analysis_username_password(line);
+        post.signup(line_tokens,app);
+    }
+
+
+
+public:
+    Server(){}
+
+    void set_Server(int t_cmd, string line_input)
+    {
+        type_cmd=t_cmd;
+        line=line_input;
+    }
+
+    void check(App& app)
+    {
+        if(type_cmd==CMD_SIGNUP)
+            signup_server(app);
+    }
+};
 
 
 
@@ -383,7 +442,7 @@ void control_structure(char* argv[])
     string line;
     app.handle_input_data(argv,app);
     Analysis_input analysis;
-
+    Server server;
 
 
 
@@ -392,8 +451,10 @@ void control_structure(char* argv[])
     while (getline(cin,line))
     {
         cmd_type=analysis.CMD_CONTROLLER(line);
-
-
+        if(cmd_type==WRONG_CMD)
+            break;
+        server.set_Server(cmd_type,line);
+        server.check(app);
     }
     
 }
