@@ -22,6 +22,8 @@ const int WRONG_CMD=-1;
 const int CMD_SIGNUP=11;
 const int CMD_LOGIN=12;
 const int CMD_LOGOUT=13;
+const int CMD_FULL_DISTRICTS=21;
+const int CMD_DISTRICTS=211;
 
 
 
@@ -89,6 +91,7 @@ private:
     friend class Analysis_input;
     friend class Server;
     friend class Check;
+    friend class GET;
 public:
     Output_msg(){status=1;}
 };
@@ -101,7 +104,7 @@ private:
     int status;
     Output_msg err;
 public:
-    Analysis_input(/* args */){status=1;}
+    Analysis_input(){status=1;}
 
     int CMD_CONTROLLER(string &line)
     {
@@ -113,7 +116,8 @@ public:
         // lev set 0
         if(input_sections[0]==CMD_POST)
             output_type+="1";
-
+        if(input_sections[0]==CMD_GET)
+            output_type+="2";
 
         // lev set 0 is ok?
         if(output_type.size()==0)
@@ -130,9 +134,19 @@ public:
             output_type+="2";
         if(input_sections[1]=="logout")
             output_type+="3";
+        if(input_sections[1]=="districts")
+        {
+            output_type+="1";
+            auto it=find(input_sections.begin(), input_sections.end(),"district");
+            if(it!=input_sections.end())
+                output_type+="1";
+        }
+
+
+
+
+
         return stoi(output_type);
-
-
     }
 
 
@@ -151,7 +165,19 @@ public:
         return output;
     }
 
-
+    string get_district_name(vector<string>& line_token)
+    {
+        string output;
+        for(int i=0;i<line_token.size();i++)
+        {
+            if(line_token[i]=="district")
+            {
+                for(int j=(i+1) ; j<line_token.size();j++)
+                    output+=line_token[j];
+            }
+        }
+        return output;
+    }
 
 
 
@@ -184,6 +210,7 @@ private:
     vector<string> neighbors;
     friend class App;
     friend class Check;
+    friend class GET;
 public:
 
     District(vector<string> data_line)
@@ -335,7 +362,7 @@ private:
     }
 
     friend class Check;
-    // friend class Server;
+    friend class GET;
 
 
 public:
@@ -434,6 +461,66 @@ public:
 
 };
 
+class GET
+{
+private:
+    Output_msg err;
+
+    void districts(string district_name,App& app)
+    {
+        if(app.distritcs.size()==0)
+        {
+            err.Empty();
+            return;
+        }
+
+        if(district_name=="NULL")
+        {
+            for(int i=0 ; i<app.distritcs.size();i++)
+            {
+                cout<<app.distritcs[i].get_name()<<":";
+                for(int j=0; j<app.distritcs[i].neighbors.size();j++)
+                {
+                    cout<<" "<<app.distritcs[i].neighbors[j];
+                    if((j+1)!=app.distritcs[i].neighbors.size())
+                        cout<<",";
+                }
+                cout<<endl;
+            }
+            
+
+        }else
+        {
+            for(int i=0;i<app.distritcs.size();i++)
+            {
+                if(app.distritcs[i].get_name()==district_name)
+                {
+                    cout<<district_name<<":";
+                    for(int j=0;j<app.distritcs[i].neighbors.size();j++)
+                    {
+                        cout<<" "<<app.distritcs[i].neighbors[j];
+                        if((j+1)!=app.distritcs[i].neighbors.size())
+                            cout<<",";
+                    }
+                    cout<<endl;
+                    return;
+                }
+            }
+            err.Not_Found();
+        }
+    }
+
+
+
+    friend class Server;
+public:
+    GET(){}
+};
+
+
+
+
+
 
 
 class Server : public Check
@@ -476,6 +563,15 @@ private:
         }
     }
 
+    void district_server(App& app)
+    {
+        GET get;
+        vector<string> line_tokens=split_by_space(line,DELIMITER_SPACE);
+        if(line_tokens.size()==3)
+            get.districts("NULL",app);
+        else
+            get.districts(analysis.get_district_name(line_tokens),app);
+    }
 
 public:
     Server(){}
@@ -491,41 +587,53 @@ public:
         // cout<<login_status<<"   "<<type_cmd<<endl;
         if(login_status==DE_ACTIVE)
         {
+
             if(type_cmd==CMD_SIGNUP)
             {
                 if(signup_server(app))
                     login_status=ACTIVE;
                 return;
             }
+
             if(type_cmd==CMD_LOGIN)
             {
                 login_server(app,login_status);
                 return;
             }
+
             if(type_cmd==CMD_LOGOUT)
             {
                 err.Permission_Denied();
                 return;
             }
             
-
-
             err.Permission_Denied();
         }else
         {
+
             if(type_cmd==CMD_SIGNUP)
                 err.Permission_Denied();
+
             if(type_cmd==CMD_LOGIN)
                 err.Permission_Denied();
+            
             if(type_cmd==CMD_LOGOUT)
             {
                 login_status=DE_ACTIVE;
                 err.OK();
             }
 
+            if(type_cmd==CMD_DISTRICTS)
+                district_server(app);
+            
+            if(type_cmd==CMD_FULL_DISTRICTS)
+                district_server(app);
+
         }
         
     }
+
+
 };
 
 
