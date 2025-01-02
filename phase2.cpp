@@ -11,6 +11,7 @@ const char DELIMITER='/';
 const char DELIMITER_SPACE=' ';
 const char DELIMITER_COMMA=',';
 
+
 void update_with_slash(string& line)
 {
     for(int i=0;i<line.size() ; i++)
@@ -125,6 +126,7 @@ private:
     map<string,int>menu_item; 
 
 public:
+
     Restaurant(vector <string> data)
     {
         int size=data.size();
@@ -136,6 +138,7 @@ public:
         close_time=stoi(data[size-2]);
         num_of_table=stoi(data[size-1]);
     }
+
 };
 
 
@@ -253,6 +256,9 @@ public:
 
 
 
+
+
+
 };
 
 
@@ -265,7 +271,10 @@ public:
 
 
 
-int main()
+int main(int argc , char* argv[])
 {
+    App app;
+    app.handle_input_data(argv,app);
+    
 
 }
