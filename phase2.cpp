@@ -83,6 +83,7 @@ private:
     void Bad_Request(){cout<<"Bad_Request"<<endl;}
     void Permission_Denied(){cout<<"Permission_Denied"<<endl;}
     friend class Analysis_input;
+    friend class Server;
 public:
     Output_msg(){status=1;}
 };
@@ -245,6 +246,8 @@ public:
     }
 
 
+    // string get_name(){return username;}
+
 };
 
 
@@ -402,13 +405,14 @@ class Server
 private:
     int type_cmd;
     string line;
-
+    Output_msg err;
     void signup_server(App& app)
     {
         Analysis_input analysis;
         POST post;
         vector<string> line_tokens=analysis.Analysis_username_password(line);
         post.signup(line_tokens,app);
+        err.OK();
     }
 
 
@@ -443,11 +447,10 @@ void control_structure(char* argv[])
     app.handle_input_data(argv,app);
     Analysis_input analysis;
     Server server;
-
-
-
-
     int cmd_type;
+
+
+
     while (getline(cin,line))
     {
         cmd_type=analysis.CMD_CONTROLLER(line);
@@ -456,6 +459,10 @@ void control_structure(char* argv[])
         server.set_Server(cmd_type,line);
         server.check(app);
     }
+
+
+    
+    
     
 }
 
