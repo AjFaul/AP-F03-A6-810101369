@@ -109,6 +109,8 @@ private:
     int status;
     string name;
     vector<string> neighbors;
+    friend class App;
+    friend class Check;
 public:
 
     District(vector<string> data_line)
@@ -140,6 +142,8 @@ private:
     vector<Reserve> reserves;
     int open_time,close_time, num_of_table;
     map<string,int>menu_item; 
+    friend class App;
+    friend class Check;
 
 public:
 
@@ -166,6 +170,8 @@ private:
     string username;
     string password;
     vector<Reserve> reserves;
+    friend class App;
+    friend class Check;
 public:
 
     Client(string name, string pass)
@@ -247,7 +253,7 @@ private:
         distritcs=cpy_district;
     }
 
-
+    friend class Check;
 
 
 
@@ -275,6 +281,40 @@ public:
     }
 
 };
+
+
+class Check
+{
+private:
+    int status;
+public:
+    Check(){status=1;}
+
+
+    bool name_is_repeatly(string name, App& app)
+    {
+        vector<string> usernames;
+        for(int i=0;i<app.restaurants.size();i++)
+            usernames.push_back(app.restaurants[i].name);
+        for(int i=0; i<usernames.size();i++)
+        {
+            if(usernames[i]==name)
+                return false;
+        }
+        return true;
+    }
+
+
+
+};
+
+
+
+
+
+
+
+
 
 
 class POST
