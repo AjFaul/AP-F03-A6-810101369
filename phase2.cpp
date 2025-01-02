@@ -10,6 +10,10 @@ using namespace std;
 const char DELIMITER='/';
 const char DELIMITER_SPACE=' ';
 const char DELIMITER_COMMA=',';
+const string CMD_POST="POST";
+const string CMD_GET="GET";
+const string CMD_PUT="PUT";
+const string CMD_DELETE="DELETE";
 
 
 void update_with_slash(string& line)
@@ -51,8 +55,42 @@ class Analysis_input
 private:
     int status;
 public:
-
     Analysis_input(/* args */){status=1;}
+
+    int CMD_CONTROLLER(string &line)
+    {
+        vector<string> input_sections;
+        input_sections=split_by_space(line,DELIMITER_SPACE);
+        string output_type;
+
+
+        // lev set 0
+        if(input_sections[0]==CMD_POST)
+            output_type+="1";
+
+
+        // lev set 0 is ok?
+        if(output_type.size()==0)
+            return -1;
+
+
+        // lev set 1
+        if(input_sections[1]=="signup")
+            output_type+="1";
+
+        return stoi(output_type);
+
+
+    }
+
+
+
+
+
+
+
+
+
 
     vector<string> Analysis_username_password(string& line)
     {
@@ -67,6 +105,9 @@ public:
         output.push_back((*it));
         return output;
     }
+
+
+
 
 
 
@@ -305,15 +346,7 @@ public:
     }
 
 
-
 };
-
-
-
-
-
-
-
 
 
 
@@ -344,10 +377,44 @@ public:
 
 
 
-int main(int argc , char* argv[])
+void control_structure(char* argv[])
 {
     App app;
+    string line;
     app.handle_input_data(argv,app);
-    
+    Analysis_input analysis;
 
+
+
+
+
+    int cmd_type;
+    while (getline(cin,line))
+    {
+        cmd_type=analysis.CMD_CONTROLLER(line);
+
+
+    }
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+int main(int argc , char* argv[])
+{
+    control_structure(argv);
 }
