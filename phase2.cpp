@@ -15,9 +15,13 @@ const string CMD_GET="GET";
 const string CMD_PUT="PUT";
 const string CMD_DELETE="DELETE";
 
+const int DE_ACTIVE=0;
+const int ACTIVE=1;
 
 const int WRONG_CMD=-1;
 const int CMD_SIGNUP=11;
+const int CMD_LOGIN=12;
+const int CMD_LOGOUT=13;
 
 
 
@@ -84,6 +88,7 @@ private:
     void Permission_Denied(){cout<<"Permission_Denied"<<endl;}
     friend class Analysis_input;
     friend class Server;
+    friend class Check;
 public:
     Output_msg(){status=1;}
 };
@@ -121,7 +126,10 @@ public:
         // lev set 1
         if(input_sections[1]=="signup")
             output_type+="1";
-
+        if(input_sections[1]=="login")
+            output_type+="2";
+        if(input_sections[1]=="logout")
+            output_type+="3";
         return stoi(output_type);
 
 
@@ -237,14 +245,20 @@ private:
     vector<Reserve> reserves;
     friend class App;
     friend class Check;
+    // friend class Server;
 public:
-
+    Client(){}
     Client(string name, string pass)
     {
         username=name;
         password=pass;
     }
 
+    void set_client(string name , string password_)
+    {
+        username=name;
+        password=password_;
+    }
 
     // string get_name(){return username;}
 
@@ -321,7 +335,7 @@ private:
     }
 
     friend class Check;
-
+    // friend class Server;
 
 
 public:
@@ -354,6 +368,7 @@ class Check
 {
 private:
     int status;
+    Output_msg err;
 public:
     Check(){status=1;}
 
@@ -361,16 +376,31 @@ public:
     bool name_is_repeatly(string name, App& app)
     {
         vector<string> usernames;
-        for(int i=0;i<app.restaurants.size();i++)
-            usernames.push_back(app.restaurants[i].name);
+        for(int i=0;i<app.clients.size();i++)
+            usernames.push_back(app.clients[i].username);
         for(int i=0; i<usernames.size();i++)
         {
             if(usernames[i]==name)
-                return false;
+                return true;
         }
-        return true;
+        return false;
     }
 
+    bool check_user_pass(vector<string> user_pass , App &app)
+    {
+        for(int i=0;i<app.clients.size();i++)
+        {
+            if(app.clients[i].username==user_pass[0] && app.clients[i].password!=user_pass[1])
+            {
+                err.Not_Found();
+                return false;
+            }
+            if(app.clients[i].username==user_pass[0] && app.clients[i].password==user_pass[1])
+                return true;
+        }
+        err.Not_Found();
+        return false;
+    }
 
 };
 
@@ -387,6 +417,12 @@ private:
         app.Add_client(client);
     }
 
+    Client login(vector<string> user_pass)
+    {
+        Client client(user_pass[0], user_pass[1]);
+        return client;
+    }
+
 
 
 
@@ -400,21 +436,45 @@ public:
 
 
 
-class Server
+class Server : public Check
 {
 private:
     int type_cmd;
     string line;
     Output_msg err;
-    void signup_server(App& app)
+    Analysis_input analysis;
+    Client cur_client;
+
+    bool signup_server(App& app)
     {
-        Analysis_input analysis;
         POST post;
         vector<string> line_tokens=analysis.Analysis_username_password(line);
-        post.signup(line_tokens,app);
-        err.OK();
+        if(name_is_repeatly(line_tokens[0],app))
+        {
+            err.Bad_Request();
+            return false;
+        }
+        else
+        {
+            cur_client.set_client(line_tokens[0], line_tokens[1]);
+            post.signup(line_tokens,app);
+            err.OK();
+            return true;
+        }
     }
 
+    void login_server(App& app,int& login_status)
+    {
+        vector<string> line_tokens=analysis.Analysis_username_password(line);
+        bool login_output=Check :: check_user_pass(line_tokens,app);
+        login_status=(login_output)?ACTIVE:DE_ACTIVE;
+        POST post;
+        if(login_status)
+        {
+            cur_client=post.login(line_tokens);
+            err.OK();
+        }
+    }
 
 
 public:
@@ -426,10 +486,45 @@ public:
         line=line_input;
     }
 
-    void check(App& app)
+    void check(App& app, int &login_status)
     {
-        if(type_cmd==CMD_SIGNUP)
-            signup_server(app);
+        // cout<<login_status<<"   "<<type_cmd<<endl;
+        if(login_status==DE_ACTIVE)
+        {
+            if(type_cmd==CMD_SIGNUP)
+            {
+                if(signup_server(app))
+                    login_status=ACTIVE;
+                return;
+            }
+            if(type_cmd==CMD_LOGIN)
+            {
+                login_server(app,login_status);
+                return;
+            }
+            if(type_cmd==CMD_LOGOUT)
+            {
+                err.Permission_Denied();
+                return;
+            }
+            
+
+
+            err.Permission_Denied();
+        }else
+        {
+            if(type_cmd==CMD_SIGNUP)
+                err.Permission_Denied();
+            if(type_cmd==CMD_LOGIN)
+                err.Permission_Denied();
+            if(type_cmd==CMD_LOGOUT)
+            {
+                login_status=DE_ACTIVE;
+                err.OK();
+            }
+
+        }
+        
     }
 };
 
@@ -448,16 +543,25 @@ void control_structure(char* argv[])
     Analysis_input analysis;
     Server server;
     int cmd_type;
-
+    int login_status=0;
 
 
     while (getline(cin,line))
     {
+
         cmd_type=analysis.CMD_CONTROLLER(line);
+        // cout<<cmd_type<<endl;
         if(cmd_type==WRONG_CMD)
             break;
         server.set_Server(cmd_type,line);
-        server.check(app);
+        server.check(app,login_status);
+
+
+
+
+
+
+
     }
 
 
