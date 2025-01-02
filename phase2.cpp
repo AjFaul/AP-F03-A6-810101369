@@ -46,6 +46,34 @@ vector<string>  split_by_space(string Line,char DELIMITER)
 
 
 
+class Analysis_input
+{
+private:
+    int status;
+public:
+    Analysis_input(/* args */){status=1;}
+
+    vector<string> Analysis_username_password(string& line)
+    {
+        vector<string> output;
+        vector<string> line_token= split_by_space(line,DELIMITER_SPACE);
+
+        auto it=find(line_token.begin() , line_token.end(),"username");
+        it++;
+        output.push_back((*it));
+        it=find(line_token.begin(),line_token.end(),"password");
+        it++;
+        output.push_back((*it));
+        return output;
+    }
+
+
+
+
+};
+
+
+
 
 
 
@@ -113,8 +141,6 @@ public:
 
 
 
-
-
 class Restaurant
 {
 private:
@@ -142,6 +168,7 @@ public:
 };
 
 
+
 class Client
 {
 private:
@@ -153,10 +180,6 @@ public:
     Client(/* args */){status=1;}
 
 };
-
-
-
-
 
 
 
@@ -249,13 +272,6 @@ public:
         handle_districts(app,file_districts);
         update_district();
     }
-
-
-
-
-
-
-
 
 
 
