@@ -24,6 +24,7 @@ const int CMD_LOGIN=12;
 const int CMD_LOGOUT=13;
 const int CMD_FULL_DISTRICTS=21;
 const int CMD_DISTRICTS=211;
+const int CMD_PUT_DISTRICT=31;
 
 
 
@@ -92,6 +93,7 @@ private:
     friend class Server;
     friend class Check;
     friend class GET;
+    friend class PUT;
 public:
     Output_msg(){status=1;}
 };
@@ -118,6 +120,8 @@ public:
             output_type+="1";
         if(input_sections[0]==CMD_GET)
             output_type+="2";
+        if(input_sections[0]==CMD_PUT)
+            output_type+="3";
 
         // lev set 0 is ok?
         if(output_type.size()==0)
@@ -141,6 +145,8 @@ public:
             if(it!=input_sections.end())
                 output_type+="1";
         }
+        if(input_sections[1]=="my_district")
+            output_type+="1";
 
 
 
@@ -173,7 +179,11 @@ public:
             if(line_token[i]=="district")
             {
                 for(int j=(i+1) ; j<line_token.size();j++)
+                {
                     output+=line_token[j];
+                    if((j+1)!=line_token.size())
+                        output+=" ";
+                }
             }
         }
         return output;
@@ -269,10 +279,11 @@ private:
     int status;
     string username;
     string password;
+    string district;
     vector<Reserve> reserves;
     friend class App;
     friend class Check;
-    // friend class Server;
+    friend class Server;
 public:
     Client(){}
     Client(string name, string pass)
@@ -287,6 +298,7 @@ public:
         password=password_;
     }
 
+    void set_district(string district_name){district=district_name;}
     // string get_name(){return username;}
 
 };
@@ -363,6 +375,7 @@ private:
 
     friend class Check;
     friend class GET;
+    friend class Server;
 
 
 public:
@@ -424,6 +437,20 @@ public:
             }
             if(app.clients[i].username==user_pass[0] && app.clients[i].password==user_pass[1])
                 return true;
+        }
+        err.Not_Found();
+        return false;
+    }
+
+    bool check_district_name(vector<District> districts ,string name)
+    {
+        for(int i=0;i<districts.size();i++)
+        {
+            if(name==districts[i].name)
+            {
+                err.OK();
+                return true;
+            }
         }
         err.Not_Found();
         return false;
@@ -518,6 +545,21 @@ public:
 };
 
 
+class PUT
+{
+private:
+    Output_msg err;
+    void my_district(string name,Client client)
+    {
+        client.set_district(name);
+    }
+
+    friend class Server;
+public:
+    PUT(){}
+
+};
+
 
 
 
@@ -531,6 +573,14 @@ private:
     Output_msg err;
     Analysis_input analysis;
     Client cur_client;
+    void update_client(App&app)
+    {
+        for(int i=0;i<app.clients.size();i++)
+        {
+            if(app.clients[i].username== cur_client.username)
+                app.clients[i]=cur_client;
+        }
+    }
 
     bool signup_server(App& app)
     {
@@ -572,6 +622,17 @@ private:
         else
             get.districts(analysis.get_district_name(line_tokens),app);
     }
+
+    void my_district_server(App& app)
+    {
+        PUT put;
+        vector<string> line_tokens=split_by_space(line,DELIMITER_SPACE);
+        string name = analysis.get_district_name(line_tokens);
+        if(check_district_name(app.distritcs , name))
+            put.my_district(name , cur_client);
+        update_client(app);
+    }
+
 
 public:
     Server(){}
@@ -628,7 +689,10 @@ public:
             
             if(type_cmd==CMD_FULL_DISTRICTS)
                 district_server(app);
-
+            
+            if(type_cmd==CMD_PUT_DISTRICT)
+                my_district_server(app);
+            
         }
         
     }
