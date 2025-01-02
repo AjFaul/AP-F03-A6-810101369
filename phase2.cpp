@@ -7,6 +7,53 @@
 #include <algorithm>
 #include <bits/stdc++.h>
 using namespace std;
+const char DELIMITER='/';
+const char DELIMITER_SPACE=' ';
+const char DELIMITER_COMMA=',';
+
+void update_with_slash(string& line)
+{
+    for(int i=0;i<line.size() ; i++)
+    {
+        if(line[i] == ';' || line[i]== ',' || line[i]==':')
+            line[i]='/';
+    }
+}
+
+vector<string>  split(string Line,char DELIMITER)
+{
+    update_with_slash(Line);
+    istringstream ss(Line);
+    string token;
+    vector<string> inputSection;
+    while (getline(ss,token,DELIMITER)){
+        inputSection.push_back(token);
+    }
+    return inputSection;
+}
+
+vector<string>  split_by_space(string Line,char DELIMITER)
+{
+    istringstream ss(Line);
+    string token;
+    vector<string> inputSection;
+    while (getline(ss,token,DELIMITER)){
+        inputSection.push_back(token);
+    }
+    return inputSection;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class Output_msg
@@ -117,6 +164,8 @@ private:
     vector<Restaurant> restaurants;
     vector<Client> clients;
     vector<District> distritcs;
+    void Add_district(District district){distritcs.push_back(district);}
+    void Add_restaurant(Restaurant restaurant){restaurants.push_back(restaurant);}
 
 
     void handle_restaurants(App& app,ifstream& file_restaurants)
@@ -151,7 +200,7 @@ private:
                 continue;
             }
             data_line=split(line,DELIMITER);
-            Dirstrict dirstrict(data_line);
+            District dirstrict(data_line);
             app.Add_district(dirstrict);
         }
         file_district.close();  
@@ -180,10 +229,30 @@ private:
 
 
 
-
 public:
     App(){status=1;}
     
+    void handle_input_data(char* argv[],App& app)
+    {
+        string name_file_restaurants=argv[1];
+        string name_file_districts=argv[2];
+        ifstream file_restaurants(name_file_restaurants);
+        if(!file_restaurants.is_open())
+            cout<<"file is not open"<<endl;
+        ifstream file_districts(name_file_districts);
+        if(!file_districts.is_open())
+            cout<<"file is not open"<<endl;
+        handle_restaurants(app,file_restaurants);
+        handle_districts(app,file_districts);
+        update_district();
+    }
+
+
+
+
+
+
+
 };
 
 
