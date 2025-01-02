@@ -51,6 +51,7 @@ class Analysis_input
 private:
     int status;
 public:
+
     Analysis_input(/* args */){status=1;}
 
     vector<string> Analysis_username_password(string& line)
@@ -71,17 +72,6 @@ public:
 
 
 };
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -177,7 +167,13 @@ private:
     string password;
     vector<Reserve> reserves;
 public:
-    Client(/* args */){status=1;}
+
+    Client(string name, string pass)
+    {
+        username=name;
+        password=pass;
+    }
+
 
 };
 
@@ -273,11 +269,32 @@ public:
         update_district();
     }
 
-
+    void Add_client(Client client)
+    {
+        clients.push_back(client);
+    }
 
 };
 
 
+class POST
+{
+private:
+    int status;
+
+    void signup(vector<string> username_password,App& app)
+    {
+        Client client(username_password[0], username_password[1]);
+        app.Add_client(client);
+    }
+
+
+
+
+public:
+    POST(/* args */){status=1;}
+
+};
 
 
 
