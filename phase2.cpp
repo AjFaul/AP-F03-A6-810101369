@@ -30,6 +30,7 @@ const int CMD_RESTAURANTS_WITH_FOODNAME=22;
 const int CMD_RESERVE_WITHOUT_FOOD=141;
 const int CMD_RESERVE_WITH_FOOD=14;
 const int CMD_RESTAURANT_DETAIL=23;
+const int CMD_INFO_CLIENT=26;
 
 
 
@@ -175,6 +176,9 @@ public:
         }
         if(input_sections[1]=="restaurant_detail")
             output_type+="3";
+        
+        if(input_sections[1]=="reserves")
+            output_type+="6";
 
 
 
@@ -534,7 +538,7 @@ private:
         return true;
     }
 
-
+    
 
 public:
 
@@ -698,11 +702,33 @@ public:
             }
         }
         
-        Reserve reserve(words[0],stoi(words[1]),start_time,end_time,aaann.separate_food(words));
-        reserves.push_back(reserve);
+        // Reserve reserve(words[0],stoi(words[1]),start_time,end_time,aaann.separate_food(words));
+        // reserves.push_back(reserve);
         return true;
-
     }
+
+    bool Add_reservetion(vector<string> words)
+    {
+        int start_time=stoi(words[2]);
+        int end_time=stoi(words[3]);
+        if(Add_reserve(words))
+        {
+            Reserve reserve(words[0],stoi(words[1]),start_time,end_time,aaann.separate_food(words));
+            reserves.push_back(reserve);
+            return true;
+        }
+        return false;
+    }
+
+
+
+    // void show_info()
+    // {
+
+    // }
+
+
+
 
 };
 
@@ -1173,18 +1199,28 @@ private:
     {
         vector<string> words=analysis.Analysis_reserve(line);
         POST post;
-        if(cur_client.Add_reserve(words))
+        // if(cur_client.Add_reserve(words))
+        // {
+        //     if(post.reserve(words,app))
+        //     {
+        //         update_client(cur_client,words,app);
+        //         show_info_reserve(words,app);
+        //         return true;
+        //     }else
+        //         return false;
+        // }
+        // else
+        //     return false;
+
+        if(post.reserve(words,app) && cur_client.Add_reservetion(words))
         {
-            if(post.reserve(words,app))
-            {
-                update_client(cur_client,words,app);
-                show_info_reserve(words,app);
-                return true;
-            }else
-                return false;
-        }
-        else
+            update_client(cur_client,words,app);
+            show_info_reserve(words,app);
+            return true;
+        }else
             return false;
+
+
     }
 
     void show_restaurant_detail_server(App& app)
@@ -1275,6 +1311,9 @@ public:
             
             if(type_cmd==CMD_RESTAURANT_DETAIL)
                 show_restaurant_detail_server(app);
+
+            if(type_cmd==CMD_INFO_CLIENT)
+                cout<<"salam";
             
 
 
