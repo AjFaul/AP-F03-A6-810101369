@@ -360,7 +360,6 @@ public:
                 }
             }
         }
-        cout<<"output hast "<<output<<endl;
         return output;
     }
 
@@ -424,6 +423,8 @@ public:
         return x;
     }
     
+
+
 };
 
 
@@ -565,7 +566,22 @@ public:
             foods_name_price+=to_string(((*it).second));
             foods_name_price+="),"; 
         }
-        cout<<foods_name_price.substr(0,foods_name_price.size()-1);
+        cout<<foods_name_price.substr(0,foods_name_price.size()-1)<<endl;
+
+
+        map<int , string > output;
+        // string itt;
+        // vector<string> irrr;
+        vector<int> num_of_table_id;
+        // for(int i=0;i<reserves.size();i++)
+        // {
+        //     num_of_table_id.push_back(reserves[i].get_table_id());
+        // }
+
+        for(int i=0;i<num_of_table;i++)
+        {
+            num_of_table_id.push_back(i+1);
+        }
 
 
 
@@ -573,8 +589,46 @@ public:
 
 
 
+        string itt;
+        string xx;
 
+        for(int i=0;i<num_of_table_id.size();i++)
+        {
+            xx="";
+            itt="";
+            vector<string> irrr;
+            for(int j=0;j<reserves.size();j++)
+            {
+                if(reserves[j].get_table_id()== num_of_table_id[i] && reserves[j].get_status()==1)
+                {
+                    itt+=" ";
+                    itt+="(";
+                    itt+=to_string(reserves[j].get_start_time());
+                    itt+="-";
+                    itt+=to_string(reserves[j].get_end_time());
+                    itt+=")";
+                    itt+=",";
+                }
+                irrr.push_back(itt);
+                itt="";
+            }
+            sort(irrr.begin(),irrr.end());
+            for(int k=0;k<irrr.size();k++)
+            {
+                xx+=irrr[k];
+            }
+            if(xx.size()!=0)
+                xx.pop_back();
+            output[num_of_table_id[i]]=xx;
+        }
         
+        for(auto it=output.begin(); it!=output.end() ; it++)
+        {
+            cout<<(*it).first<<":";
+            cout<<(*it).second<<endl;
+        }
+
+
     }
 
 
@@ -636,7 +690,7 @@ public:
         int end_time=stoi(words[3]);
         for(int i=0;i<reserves.size();i++)
         {
-            if(conflict_time_client(start_time,end_time,reserves[i].get_start_time(),reserves[i].get_end_time()))
+            if(!conflict_time_client(start_time,end_time,reserves[i].get_start_time(),reserves[i].get_end_time()))
             {
                 Output_msg err;
                 err.Permission_Denied();
@@ -1119,11 +1173,15 @@ private:
     {
         vector<string> words=analysis.Analysis_reserve(line);
         POST post;
-        if(post.reserve(words,app) && cur_client.Add_reserve(words))
+        if(cur_client.Add_reserve(words))
         {
-            update_client(cur_client,words,app);
-            show_info_reserve(words,app);
-            return true;
+            if(post.reserve(words,app))
+            {
+                update_client(cur_client,words,app);
+                show_info_reserve(words,app);
+                return true;
+            }else
+                return false;
         }
         else
             return false;
@@ -1132,7 +1190,6 @@ private:
     void show_restaurant_detail_server(App& app)
     {
         string rest_name=analysis.restaurant_name(split_by_space(line,DELIMITER_SPACE));
-        cout<<"salam inja hast "<<rest_name<<endl;
         for(int i=0;i<app.restaurants.size();i++)
         {
             if( rest_name==app.restaurants[i].name)
