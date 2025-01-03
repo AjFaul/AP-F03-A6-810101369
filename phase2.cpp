@@ -29,6 +29,7 @@ const int CMD_RESTAURANTS_WITHOUT_FOODNAME=221;
 const int CMD_RESTAURANTS_WITH_FOODNAME=22;
 const int CMD_RESERVE_WITHOUT_FOOD=141;
 const int CMD_RESERVE_WITH_FOOD=14;
+const int CMD_RESTAURANT_DETAIL=23;
 
 
 
@@ -172,6 +173,8 @@ public:
             if(it==input_sections.end())
                 output_type+="1";
         }
+        if(input_sections[1]=="restaurant_detail")
+            output_type+="3";
 
 
 
@@ -344,6 +347,22 @@ public:
         return output;
     }
 
+    string restaurant_name(vector<string> words)
+    {
+        string output;
+        for(int i=0;i<words.size();i++)
+        {
+            if(words[i]=="restaurant_name")
+            {
+                for(int j=(i+1); j<words.size();j++)
+                {
+                    output+=words[j];
+                }
+            }
+        }
+        cout<<"output hast "<<output<<endl;
+        return output;
+    }
 
 };
 
@@ -529,6 +548,37 @@ public:
         close_time=stoi(data[size-2]);
         num_of_table=stoi(data[size-1]);
     }
+
+
+    void show_restaurant_info()
+    {
+        cout<<"Name: "<<name<<endl;
+        cout<<"District: "<<district<<endl;
+        cout<<"Time: "<<open_time<<"-"<<close_time<<endl;
+        cout<<"Menu:";
+        string foods_name_price;
+        for(auto it=menu_item.begin();it!=menu_item.end();it++)
+        {
+            foods_name_price+=" ";
+            foods_name_price+=(*it).first;
+            foods_name_price+="(";
+            foods_name_price+=to_string(((*it).second));
+            foods_name_price+="),"; 
+        }
+        cout<<foods_name_price.substr(0,foods_name_price.size()-1);
+
+
+
+
+
+
+
+
+        
+    }
+
+
+
 
 };
 
@@ -1079,7 +1129,21 @@ private:
             return false;
     }
 
-
+    void show_restaurant_detail_server(App& app)
+    {
+        string rest_name=analysis.restaurant_name(split_by_space(line,DELIMITER_SPACE));
+        cout<<"salam inja hast "<<rest_name<<endl;
+        for(int i=0;i<app.restaurants.size();i++)
+        {
+            if( rest_name==app.restaurants[i].name)
+            {
+                app.restaurants[i].show_restaurant_info();
+                return;
+            }
+        }
+        err.Not_Found();
+        return;
+    }
 
 public:
     Server(){}
@@ -1151,6 +1215,18 @@ public:
             
             if(type_cmd==CMD_RESERVE_WITHOUT_FOOD)
                 reserve_server(app);
+            
+            if(type_cmd==CMD_RESTAURANT_DETAIL)
+                show_restaurant_detail_server(app);
+            
+
+
+
+        
+
+
+
+
         }
         
     }
