@@ -101,6 +101,9 @@ private:
     friend class Check;
     friend class GET;
     friend class PUT;
+    friend class POST;
+    friend class Restaurant;
+    friend class Client;
 public:
     Output_msg(){status=1;}
 };
@@ -260,10 +263,10 @@ public:
         {
             extra+=(*it);
             it++;
-            if(check_type(list_name,(*it)))
-                extra+=" ";
             if(it==token.end())
                 break;
+            if(check_type(list_name,(*it)))
+                extra+=" ";
         }
         output.push_back(extra);
         extra="";
@@ -317,10 +320,10 @@ public:
         {
             extra+=(*it);
             it++;
-            if(check_type(list_name,(*it)))
-                extra+=" ";
             if(it==token.end())
                 break;
+            if(check_type(list_name,(*it)))
+                extra+=" ";
         }
 
 
@@ -381,6 +384,26 @@ public:
     int get_status(){return status;}
 
     void set_reserve_id(int id){reserve_id=id;}
+
+    int get_table_id(){return table_id;}
+
+    int get_start_time(){return start_time;}
+    
+    int get_end_time(){return end_time;}
+
+    int get_reserve_id(){return reserve_id;}
+
+    vector<int> get_prices(){return prices;}
+
+    int get_price()
+    {
+        int x=0;
+        for(int i=0;i<prices.size();i++)
+        {
+            x+=prices[i];   
+        }
+        return x;
+    }
     
 };
 
@@ -429,16 +452,66 @@ private:
     friend class Check;
     friend class GET;
     friend class POST;
+    friend class Server;
+    Output_msg err;
 
-    void Add_reserve(int table_id, int s_time ,int e_time, vector<string> foods)
+
+
+    bool conflict_time(int s1,int e1,int s2 , int e2)
+    {
+        if(s1<1 || e1>24)
+            return false;
+        if(e1>s2 && e1<=e2)
+            return false;
+        if(s1>s2 && s1<=e2)
+            return false;
+        if(e2>s1 && e2<=e1)
+            return false;
+        if(s2>s1 && s2<=e1)
+            return false;
+        return true;
+    }
+
+
+
+    bool Add_reserve(int table_id, int s_time ,int e_time, vector<string> foods)
     {
         Reserve reserve(name,table_id,s_time,e_time,foods);
         vector<int> prices;
+        
+        if(table_id>num_of_table)
+        {
+            err.Not_Found();
+            return false;
+        }
+
+        for(int i=0;i<reserves.size();i++)
+        {
+            if(reserves[i].get_table_id()==table_id)
+            {
+                if(conflict_time(s_time,e_time,reserves[i].get_start_time(),reserves[i].get_end_time()))
+                {
+                    err.Permission_Denied();
+                    return false;
+                }
+            }
+        }
+        
+
         for(int i=0;i<foods.size();i++)
+        {
+            if(menu_item[foods[i]]==0)
+            {
+                err.Not_Found();
+                return false;
+            }
             prices.push_back(menu_item[foods[i]]);
+        }
+
         reserve.set_price(prices);
+        reserve.set_reserve_id(reserves.size()+1);
         reserves.push_back(reserve);
-        reserve.set_reserve_id(reserves.size());
+        return true;
     }
 
 
@@ -469,6 +542,7 @@ private:
     string password;
     string district;
     vector<Reserve> reserves;
+    Analysis_input aaann;
     friend class App;
     friend class Check;
     friend class Server;
@@ -489,6 +563,42 @@ public:
 
     void set_district(string district_name){district=district_name;}
     // string get_name(){return username;}
+
+    bool conflict_time_client(int s1,int e1,int s2 , int e2)
+    {
+        if(s1<1 || e1>24)
+            return false;
+        if(e1>s2 && e1<=e2)
+            return false;
+        if(s1>s2 && s1<=e2)
+            return false;
+        if(e2>s1 && e2<=e1)
+            return false;
+        if(s2>s1 && s2<=e1)
+            return false;
+        return true;
+    }
+
+
+    bool Add_reserve(vector<string>&words)
+    {
+        int start_time=stoi(words[2]);
+        int end_time=stoi(words[3]);
+        for(int i=0;i<reserves.size();i++)
+        {
+            if(conflict_time_client(start_time,end_time,reserves[i].get_start_time(),reserves[i].get_end_time()))
+            {
+                Output_msg err;
+                err.Permission_Denied();
+                return false;
+            }
+        }
+        
+        Reserve reserve(words[0],stoi(words[1]),start_time,end_time,aaann.separate_food(words));
+        reserves.push_back(reserve);
+        return true;
+
+    }
 
 };
 
@@ -565,7 +675,7 @@ private:
     friend class Check;
     friend class GET;
     friend class Server;
-
+    friend class POST;
 
 public:
     App(){status=1;}
@@ -696,11 +806,12 @@ public:
 
 
 
-class POST
+class POST 
 {
 private:
     int status;
-
+    Output_msg err;
+    Analysis_input analysis;
     void signup(vector<string> username_password,App& app)
     {
         Client client(username_password[0], username_password[1]);
@@ -713,19 +824,27 @@ private:
         return client;
     }
 
-    void reserve(vector<string> words , App& app)
+    bool reserve(vector<string> words , App& app)
     {
-        
+        for(int i=0;i<app.restaurants.size();i++)
+        {
+            if(words[0]==app.restaurants[i].name)
+            {
+                vector<string>foods=analysis.separate_food(words);
+                if(app.restaurants[i].Add_reserve(stoi(words[1]),stoi(words[2]),stoi(words[3]),foods))
+                {
+                    return true;
+                }
+            }
+        }
+        err.Not_Found();
+        return false;
     }
-
-
-
-
 
 
     friend class Server;
 public:
-    POST(/* args */){status=1;}
+    POST(){status=1;}
 
 };
 
@@ -925,6 +1044,43 @@ private:
     }
 
 
+    void show_info_reserve(vector<string> words,App& app)
+    {
+        cout<<"Reserve ID: "<<cur_client.reserves[cur_client.reserves.size()-1].get_reserve_id()<<endl;
+        cout<<"Table "<<words[1]<<" for "<<words[2]<<" to "<<words[3]<<" in "<<words[0]<<endl;
+        int price=cur_client.reserves[cur_client.reserves.size()-1].get_price();
+        cout<<"Price: "<<price<<endl;
+    }
+
+
+    void update_client(Client& client , vector<string>words , App& app)
+    {
+        for(int i=0;i<app.restaurants.size();i++)
+        {
+            if(app.restaurants[i].name==words[0])
+            {
+                client.reserves[client.reserves.size()-1].set_reserve_id(app.restaurants[i].reserves[app.restaurants[i].reserves.size()-1].get_reserve_id());
+                client.reserves[client.reserves.size()-1].set_price(app.restaurants[i].reserves[app.restaurants[i].reserves.size()-1].get_prices());
+            }
+        }
+    }
+
+    bool reserve_server(App& app)
+    {
+        vector<string> words=analysis.Analysis_reserve(line);
+        POST post;
+        if(post.reserve(words,app) && cur_client.Add_reserve(words))
+        {
+            update_client(cur_client,words,app);
+            show_info_reserve(words,app);
+            return true;
+        }
+        else
+            return false;
+    }
+
+
+
 public:
     Server(){}
 
@@ -991,13 +1147,10 @@ public:
                 restaurants_server(app);
 
             if(type_cmd==CMD_RESERVE_WITH_FOOD)
-                show_vector(analysis.Analysis_reserve(line));
+                reserve_server(app);
             
             if(type_cmd==CMD_RESERVE_WITHOUT_FOOD)
-                show_vector(analysis.Analysis_reserve(line));
-            
-
-            
+                reserve_server(app);
         }
         
     }
