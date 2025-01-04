@@ -32,6 +32,8 @@ const int CMD_RESERVE_WITH_FOOD=14;
 const int CMD_RESTAURANT_DETAIL=23;
 const int CMD_INFO_CLIENT=26;
 const int CMD_DELETE_M=4;
+const int CMD_INCREASE_BUDGET=115;
+const int CMD_SHOW_BUDGET=2111;
 
 
 
@@ -186,6 +188,14 @@ public:
         
         if(input_sections[1]=="reserves")
             output_type+="6";
+        
+        if(input_sections[1]=="increase_budget")
+            output_type+="15";
+
+        if(input_sections[1]=="show_budget")
+            output_type+="111";
+        
+
 
 
 
@@ -520,13 +530,19 @@ private:
 
     bool conflict_time(int s1,int e1,int s2 , int e2)
     {
+        // cout<<"------------------"<<endl;
+        // cout<<"s1 hast "<<s1<<endl;
+        // cout<<"e1 hast "<<e1<<endl;
+        // cout<<"s2 hast "<<s2<<endl;
+        // cout<<"e2 hast "<<e2<<endl;
+        // cout<<"------------------"<<endl;
         if(s1<1 || e1>24)
             return false;
-        if(e1>s2 && e1<=e2)
+        if(e1>s2 && e1<e2)
             return false;
-        if(s1>s2 && s1<=e2)
+        if(s1>s2 && s1<e2)
             return false;
-        if(e2>s1 && e2<=e1)
+        if(e2>s1 && e2<e1)
             return false;
         if(s2>s1 && s2<e1)
             return false;
@@ -550,8 +566,9 @@ private:
         {
             if(reserves[i].get_table_id()==table_id)
             {
-                if(conflict_time(s_time,e_time,reserves[i].get_start_time(),reserves[i].get_end_time()))
+                if(!conflict_time(s_time,e_time,reserves[i].get_start_time(),reserves[i].get_end_time()))
                 {
+                    
                     err.Permission_Denied();
                     return false;
                 }
@@ -686,6 +703,7 @@ public:
 class Client
 {
 private:
+    int budget=0;
     int status;
     string username;
     string password;
@@ -796,7 +814,12 @@ public:
         }
     }
 
+    void Add_budget(int amount)
+    {
+        budget+=amount;
+    }
 
+    int get_budget(){return budget;}
 
 
 };
@@ -884,12 +907,20 @@ public:
     {
         string name_file_restaurants=argv[1];
         string name_file_districts=argv[2];
+        string name_file_discounts=argv[3];
+
         ifstream file_restaurants(name_file_restaurants);
         if(!file_restaurants.is_open())
             cout<<"file is not open"<<endl;
+        
         ifstream file_districts(name_file_districts);
         if(!file_districts.is_open())
             cout<<"file is not open"<<endl;
+        
+        // ifstream file_discount(name_file_discounts);
+        // if(!file_discount.is_open())
+        //     cout<<"file is not open"<<endl;
+        
         handle_restaurants(app,file_restaurants);
         handle_districts(app,file_districts);
         update_district();
@@ -1382,6 +1413,10 @@ private:
                     del.del_func(restaurant_name,stoi(reserve_id),app);
                     err.OK();
                     return;
+                }else
+                {
+                    err.Not_Found();
+                    return;
                 }
             }
         }
@@ -1389,6 +1424,31 @@ private:
         return;
     }
 
+
+    void Add_budget_server(App& app)
+    {
+        vector<string>keys={"amount"};
+        string amount=analysis.search_words(line,keys[0],keys);
+        int x;
+        try
+        {
+            x=stoi(amount);
+            cur_client.Add_budget(x);
+            err.OK();
+            return;
+        }
+        catch(...)
+        {
+            err.Bad_Request();
+            return;
+        }
+        
+    }
+
+    void show_budget_server(App& app)
+    {
+        cout<<cur_client.get_budget()<<endl;
+    }
 
 public:
     Server(){}
@@ -1469,6 +1529,13 @@ public:
 
             if(type_cmd==CMD_DELETE_M)
                 delete_server(app);
+            
+            if(type_cmd==CMD_INCREASE_BUDGET)
+                Add_budget_server(app);
+
+            if(type_cmd==CMD_SHOW_BUDGET)
+                show_budget_server(app);
+
 
 
         }
