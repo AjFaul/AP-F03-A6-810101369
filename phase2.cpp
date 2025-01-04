@@ -601,11 +601,15 @@ public:
         string foods_name_price;
         for(auto it=menu_item.begin();it!=menu_item.end();it++)
         {
-            foods_name_price+=" ";
-            foods_name_price+=(*it).first;
-            foods_name_price+="(";
-            foods_name_price+=to_string(((*it).second));
-            foods_name_price+="),"; 
+            if((*it).second!=0)
+            {
+                foods_name_price+=" ";
+                foods_name_price+=(*it).first;
+                foods_name_price+="(";
+                foods_name_price+=to_string(((*it).second));
+                foods_name_price+="),"; 
+            }
+            
         }
         cout<<foods_name_price.substr(0,foods_name_price.size()-1)<<endl;
 
@@ -927,7 +931,7 @@ public:
         {
             if(app.clients[i].username==user_pass[0] && app.clients[i].password!=user_pass[1])
             {
-                err.Not_Found();
+                err.Permission_Denied();
                 return false;
             }
             if(app.clients[i].username==user_pass[0] && app.clients[i].password==user_pass[1])
@@ -1325,7 +1329,9 @@ private:
 
     void show_restaurant_detail_server(App& app)
     {
-        string rest_name=analysis.restaurant_name(split_by_space(line,DELIMITER_SPACE));
+        vector<string> keys={"restaurant_name"};
+        string rest_name=analysis.search_words(line,keys[0],keys);
+        cout<<rest_name<<endl;
         for(int i=0;i<app.restaurants.size();i++)
         {
             if( rest_name==app.restaurants[i].name)
