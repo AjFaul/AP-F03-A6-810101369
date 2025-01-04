@@ -134,6 +134,8 @@ public:
             output_type+="2";
         if(input_sections[0]==CMD_PUT)
             output_type+="3";
+        if(input_sections[0]==CMD_DELETE)
+            output_type+="4";
 
         // lev set 0 is ok?
         if(output_type.size()==0)
@@ -367,6 +369,33 @@ public:
         return output;
     }
 
+    string search_words(string& line, string& key , vector<string>& keys)
+    {
+        vector<string> tokens=split_by_space(line,DELIMITER_SPACE);
+        string output="";
+        for(int i=0;i<tokens.size();i++)
+        {
+            if(tokens[i]==key)
+            {
+                for(int j=(i+1);j<tokens.size();j++)
+                {
+                    if(find(keys.begin(),keys.end(),tokens[j]) == keys.end())
+                    {
+                        output+=tokens[j];
+                        output+=" ";
+                    }else
+                        break;;
+                }
+                break;
+            }
+        }
+        if(output.size()!=0)
+            output.pop_back();
+        return output;
+    }
+
+
+
 };
 
 
@@ -382,6 +411,7 @@ private:
     vector<int> prices;
     int reserve_id;
     int start_time,end_time;
+    friend class Client;
     
 public:
     Reserve(){status=1;}
@@ -427,6 +457,7 @@ public:
         return x;
     }
     
+    string get_restaurant_name(){return restaurant_name;}
 
 
 };
@@ -491,7 +522,7 @@ private:
             return false;
         if(e2>s1 && e2<=e1)
             return false;
-        if(s2>s1 && s2<=e1)
+        if(s2>s1 && s2<e1)
             return false;
         return true;
     }
@@ -678,11 +709,11 @@ public:
             return false;
         if(e1>s2 && e1<=e2)
             return false;
-        if(s1>s2 && s1<=e2)
+        if(s1>s2 && s1<e2)//
             return false;
         if(e2>s1 && e2<=e1)
             return false;
-        if(s2>s1 && s2<=e1)
+        if(s2>s1 && s2<e1)
             return false;
         return true;
     }
@@ -722,10 +753,37 @@ public:
 
 
 
-    // void show_info()
-    // {
-
-    // }
+    void show_info(string restaurant_name , string reserve_id,bool type_mode)
+    {
+        vector<int> perm;
+        for(int i=0;i<reserves.size();i++)
+        {
+            if(  (restaurant_name==reserves[i].get_restaurant_name() && reserve_id==to_string(reserves[i].get_reserve_id())) || type_mode )
+            {
+                perm.push_back(reserves[i].get_start_time()+100*i);
+            }
+        }
+        for(int i=0;i<perm.size();i++)
+        {
+            // string x;
+            int index=perm[i]/100;
+            cout<<reserves[index].get_reserve_id()<<": ";
+            cout<<reserves[index].get_restaurant_name()<<" ";
+            cout<<reserves[index].get_table_id()<<" ";
+            cout<<reserves[index].get_start_time()<<" "<<reserves[index].get_end_time()<<" ";
+            vector<string>visited;
+            for(int j=0;j<reserves[index].foods_name.size();j++)
+            {
+                if(count(visited.begin(),visited.end(),reserves[index].foods_name[j])==0 )
+                {
+                    visited.push_back(reserves[index].foods_name[j]);
+                    cout<<reserves[index].foods_name[j]<<"(";
+                    cout<<count(reserves[index].foods_name.begin(),reserves[index].foods_name.end(),reserves[index].foods_name[j])<<") ";
+                }
+            }
+            cout<<endl;
+        }
+    }
 
 
 
@@ -1211,7 +1269,6 @@ private:
         // }
         // else
         //     return false;
-
         if(post.reserve(words,app) && cur_client.Add_reservetion(words))
         {
             update_client(cur_client,words,app);
@@ -1237,6 +1294,30 @@ private:
         err.Not_Found();
         return;
     }
+
+    void show_client_info(App& app)
+    {
+        vector<string> keys={"restaurant_name","reserve_id"};
+        string restaurant_name=analysis.search_words(line,keys[0],keys);
+        string reserve_id=analysis.search_words(line,keys[1],keys);
+        if(cur_client.reserves.size()==0)
+        {
+            err.Empty();
+            return;
+        }
+        if(reserve_id.size()>0 && restaurant_name.size()==0)
+        {
+            err.Bad_Request();
+            return;
+        }
+        bool type_mode;
+        if(reserve_id.size()==0 && restaurant_name.size()==0)
+            type_mode=true;
+        cur_client.show_info(restaurant_name,reserve_id,type_mode);
+        
+    }
+
+
 
 public:
     Server(){}
@@ -1313,7 +1394,7 @@ public:
                 show_restaurant_detail_server(app);
 
             if(type_cmd==CMD_INFO_CLIENT)
-                cout<<"salam";
+                show_client_info(app);
             
 
 
@@ -1326,6 +1407,7 @@ public:
         }
         
     }
+
 
 
 };
