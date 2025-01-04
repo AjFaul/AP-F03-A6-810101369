@@ -31,6 +31,7 @@ const int CMD_RESERVE_WITHOUT_FOOD=141;
 const int CMD_RESERVE_WITH_FOOD=14;
 const int CMD_RESTAURANT_DETAIL=23;
 const int CMD_INFO_CLIENT=26;
+const int CMD_DELETE_M=4;
 
 
 
@@ -106,6 +107,7 @@ private:
     friend class POST;
     friend class Restaurant;
     friend class Client;
+    friend class DELETE;
 public:
     Output_msg(){status=1;}
 };
@@ -135,7 +137,10 @@ public:
         if(input_sections[0]==CMD_PUT)
             output_type+="3";
         if(input_sections[0]==CMD_DELETE)
+        {
             output_type+="4";
+            return stoi(output_type);
+        }
 
         // lev set 0 is ok?
         if(output_type.size()==0)
@@ -508,6 +513,7 @@ private:
     friend class GET;
     friend class POST;
     friend class Server;
+    friend class DELETE;
     Output_msg err;
 
 
@@ -760,7 +766,8 @@ public:
         {
             if(  (restaurant_name==reserves[i].get_restaurant_name() && reserve_id==to_string(reserves[i].get_reserve_id())) || type_mode )
             {
-                perm.push_back(reserves[i].get_start_time()+100*i);
+                if(reserves[i].get_status()==1)
+                    perm.push_back(reserves[i].get_start_time()+100*i);
             }
         }
         for(int i=0;i<perm.size();i++)
@@ -864,6 +871,7 @@ private:
     friend class GET;
     friend class Server;
     friend class POST;
+    friend class DELETE;
 
 public:
     App(){status=1;}
@@ -1149,6 +1157,41 @@ public:
 
 
 
+class DELETE
+{
+private:
+    Output_msg err;
+public:
+    DELETE(){}
+
+    bool del_func(string restaurant_name, int reserve_id,App& app)
+    {
+        for(int i=0;i<app.restaurants.size();i++)
+        {
+            if(app.restaurants[i].name ==restaurant_name)
+            {
+                for(int j=0;j<app.restaurants[i].reserves.size();j++)
+                {
+                    if(app.restaurants[i].reserves[j].get_reserve_id()==reserve_id)
+                    {
+                        app.restaurants[i].reserves[j].delete_reserve();
+                        return true;
+                    }
+                }
+                err.Not_Found();
+                return false;
+            }
+        }
+        err.Not_Found();
+        return false;
+    }
+
+
+};
+
+
+
+
 
 
 
@@ -1317,6 +1360,28 @@ private:
         
     }
 
+    void delete_server(App& app)
+    {
+        DELETE del;
+        vector<string> keys={"restaurant_name","reserve_id"};
+        string restaurant_name=analysis.search_words(line,keys[0],keys);
+        string reserve_id=analysis.search_words(line,keys[1],keys);
+        for(int i=0;i<cur_client.reserves.size();i++)
+        {
+            if(cur_client.reserves[i].get_restaurant_name()==restaurant_name)
+            {
+                if(to_string(cur_client.reserves[i].get_reserve_id())==reserve_id)
+                {
+                    cur_client.reserves[i].delete_reserve();
+                    del.del_func(restaurant_name,stoi(reserve_id),app);
+                    err.OK();
+                    return;
+                }
+            }
+        }
+        err.Permission_Denied();
+        return;
+    }
 
 
 public:
@@ -1395,13 +1460,9 @@ public:
 
             if(type_cmd==CMD_INFO_CLIENT)
                 show_client_info(app);
-            
 
-
-
-        
-
-
+            if(type_cmd==CMD_DELETE_M)
+                delete_server(app);
 
 
         }
