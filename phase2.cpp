@@ -10,6 +10,9 @@ using namespace std;
 const char DELIMITER='/';
 const char DELIMITER_SPACE=' ';
 const char DELIMITER_COMMA=',';
+const char DELIMITER_SIMIC=';';
+const char DELIMITER_YA='|';
+const char DELIMITER_2_DOT=':';
 const string CMD_POST="POST";
 const string CMD_GET="GET";
 const string CMD_PUT="PUT";
@@ -41,8 +44,25 @@ const int CMD_SHOW_BUDGET=2111;
 
 
 
+struct discount
+{
+    string type;
+    string name_food;
+    string value;
+};
 
+struct total_discount
+{
+    string type;
+    string floor_price;
+    string value;
+};
 
+struct first_discount
+{
+    string type;
+    string value;
+};
 
 
 
@@ -526,6 +546,12 @@ private:
     friend class DELETE;
     Output_msg err;
 
+    vector<discount> discounts;
+    total_discount total_price_discount;
+    first_discount first_order_discount;
+
+
+
 
 
     bool conflict_time(int s1,int e1,int s2 , int e2)
@@ -693,6 +719,67 @@ public:
 
     }
 
+
+    void Add_total_price(string words)
+    {
+        vector<string> data=split_by_space(words,DELIMITER_SIMIC);
+
+        if(data[0]=="none")
+        {
+            total_price_discount.floor_price="none";
+            total_price_discount.type="none";
+            total_price_discount.value="none";
+            return;
+        }
+
+        total_price_discount.type=data[0];
+        total_price_discount.floor_price=data[1];
+        total_price_discount.value=data[2];
+        return;
+    }
+
+    void Add_first_order(string words)
+    {
+        vector<string>data=split_by_space(words,DELIMITER_SIMIC);
+
+        if(data[0]=="none")
+        {
+            first_order_discount.type="none";
+            first_order_discount.value="none";
+            return;
+        }
+
+        first_order_discount.type=data[0];
+        first_order_discount.value=data[1];
+        return;
+    }
+
+    void Add_foods_discounts(string words)
+    {
+        vector<string> section_food=split_by_space(words,DELIMITER_YA);
+
+        if(section_food[0]=="none")
+        {
+            discount dis;
+            dis.name_food="none";
+            dis.type="none";
+            dis.value="none";
+            discounts.push_back(dis);
+            return;
+        }
+
+        for(int i=0;i<section_food.size();i++)
+        {
+            vector<string> data_discount=split_by_space(section_food[i],DELIMITER_SIMIC);
+            discount dis;
+            dis.type=data_discount[0];
+            vector<string>x=split_by_space(data_discount[1],DELIMITER_2_DOT);
+            dis.name_food=x[0];
+            dis.value=x[1];
+            discounts.push_back(dis);
+        }
+
+    }
 
 
 
@@ -894,6 +981,36 @@ private:
         distritcs=cpy_district;
     }
 
+
+    void handle_discounts(App& app ,ifstream& file_discounts)
+    {
+        string line;
+        int num_line=0;
+        vector<string>data_line;
+        while (getline(file_discounts,line))
+        {
+            if(num_line==0)
+            {
+                num_line++;
+                continue;
+            }
+            data_line=split_by_space(line,DELIMITER_COMMA);
+
+            for(int i=0;i<app.restaurants.size();i++)
+            {
+                if(app.restaurants[i].name==data_line[0])
+                {
+                    app.restaurants[i].Add_total_price(data_line[1]);
+                    app.restaurants[i].Add_first_order(data_line[2]);
+                    app.restaurants[i].Add_foods_discounts(data_line[3]);
+                }
+            }
+        }
+        file_discounts.close();
+    }
+
+
+
     friend class Check;
     friend class GET;
     friend class Server;
@@ -917,13 +1034,15 @@ public:
         if(!file_districts.is_open())
             cout<<"file is not open"<<endl;
         
-        // ifstream file_discount(name_file_discounts);
-        // if(!file_discount.is_open())
-        //     cout<<"file is not open"<<endl;
+        ifstream file_discount(name_file_discounts);
+        if(!file_discount.is_open())
+            cout<<"file is not open"<<endl;
+        
         
         handle_restaurants(app,file_restaurants);
         handle_districts(app,file_districts);
         update_district();
+        handle_discounts(app,file_discount);
     }
 
     void Add_client(Client client)
