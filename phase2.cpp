@@ -781,7 +781,52 @@ public:
 
     }
 
+    void show_order_amount_discount()
+    {
+        if(total_price_discount.type=="none")
+            return;
+        cout<<"Order Amount Discount: "<<total_price_discount.type<<", ";
+        cout<<total_price_discount.floor_price<<", "<<total_price_discount.value<<endl;  
+    }
 
+    void show_food_discount()
+    {
+        if(discounts.size()==0)
+            return;
+
+        cout<<"Item Specific Discount:";
+        string x;
+        for(int i=0;i<discounts.size();i++)
+        {
+            x+=" ";
+            x+=discounts[i].name_food;
+            x+="(";
+            x+=discounts[i].type;
+            x+=": ";
+            x+=discounts[i].value;
+            x+="),";
+        }
+        if(x.size()!=0)
+            x.pop_back();
+        cout<<x<<endl;
+    }
+
+    void show_first_discount()
+    {
+        if(first_order_discount.value=="none")
+            return;
+        cout<<"First Order Discount: ";
+        cout<<first_order_discount.type<<", ";
+        cout<<first_order_discount.value<<endl;
+    }
+
+
+    void show_discount()
+    {
+        show_order_amount_discount();
+        show_food_discount();
+        show_first_discount();
+    }
 
 };
 
@@ -1487,6 +1532,7 @@ private:
             if( rest_name==app.restaurants[i].name)
             {
                 app.restaurants[i].show_restaurant_info();
+                app.restaurants[i].show_discount();
                 return;
             }
         }
