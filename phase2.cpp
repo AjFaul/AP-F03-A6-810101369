@@ -577,7 +577,7 @@ private:
 
 
 
-    bool Add_reserve(int table_id, int s_time ,int e_time, vector<string> foods)
+    bool Add_reserve(int table_id, int s_time ,int e_time, vector<string> foods,int budget=0)
     {
         Reserve reserve(name,table_id,s_time,e_time,foods);
         vector<int> prices;
@@ -610,6 +610,15 @@ private:
                 return false;
             }
             prices.push_back(menu_item[foods[i]]);
+        }
+        int sum_all=0;
+        for(int i=0;i<prices.size();i++)
+            sum_all+=prices[i];
+        
+        if(budget<sum_all)
+        {
+            err.Bad_Request();
+            return false;
         }
 
         reserve.set_price(prices);
@@ -836,6 +845,7 @@ class Client
 {
 private:
     int budget=0;
+    int num_of_reserve=0;
     int status;
     string username;
     string password;
@@ -952,6 +962,10 @@ public:
     }
 
     int get_budget(){return budget;}
+
+    void decrease_budget(int num){budget=budget-num;}
+
+    void set_num_of_reserve(int x){num_of_reserve=num_of_reserve+x;}
 
 
 };
@@ -1219,14 +1233,14 @@ private:
         return client;
     }
 
-    bool reserve(vector<string> words , App& app)
+    bool reserve(vector<string> words , App& app,Client& client)
     {
         for(int i=0;i<app.restaurants.size();i++)
         {
             if(words[0]==app.restaurants[i].name)
             {
                 vector<string>foods=analysis.separate_food(words);
-                if(app.restaurants[i].Add_reserve(stoi(words[1]),stoi(words[2]),stoi(words[3]),foods))
+                if(app.restaurants[i].Add_reserve(stoi(words[1]),stoi(words[2]),stoi(words[3]),foods,client.get_budget()))
                 {
                     return true;
                 }
@@ -1474,12 +1488,96 @@ private:
     }
 
 
-    void show_info_reserve(vector<string> words,App& app)
+    float show_order_amount_discount(App&app , string restaurant_name,int original_price)
+    {
+        for(int i=0;i<app.restaurants.size();i++)
+        {
+            if(app.restaurants[i].name==restaurant_name)
+            {
+                cout<<"Order Amount Discount: ";
+                if(app.restaurants[i].total_price_discount.type=="percent")
+                {
+                    cout<<stoi(app.restaurants[i].total_price_discount.value)*original_price/100<<endl;
+                    return stof(app.restaurants[i].total_price_discount.value)*original_price/100;
+
+                }else
+                {
+                    cout<<stoi(app.restaurants[i].total_price_discount.value)<<endl;
+                    return stof(app.restaurants[i].total_price_discount.value);
+                }
+                
+            }
+        }
+        return 0;
+    }
+
+
+    float show_total_item(App&app , string restaurant_name,vector<string> foods)
+    {
+        float output=0;
+        for(int i=0;i<app.restaurants.size();i++)
+        {
+            if(app.restaurants[i].name==restaurant_name)
+            {
+                for(int j=0;j<app.restaurants[i].discounts.size();j++)
+                {
+                    if(find(foods.begin(),foods.end(),app.restaurants[i].discounts[j].name_food)!=foods.end())
+                    {
+                        output+=stof(app.restaurants[i].discounts[j].value);
+                    }
+                }
+            }
+        }
+        
+        if(output!=0)
+        {
+            cout<<"Total Item Specific Discount: "<<output<<endl;
+            return output;
+        }
+        return output;
+    }
+
+    float show_first_discount(App &app , string restaurant_name)
+    {
+        if(cur_client.num_of_reserve>1)
+            return 0;
+        float output=0;
+        for(int i=0;i<app.restaurants.size();i++)
+        {
+            if(app.restaurants[i].name==restaurant_name)
+            {
+                if(app.restaurants[i].first_order_discount.type!="none")
+                {
+                    cout<<"First Order Discount: "<<app.restaurants[i].first_order_discount.value<<endl;
+                    output=stof(app.restaurants[i].first_order_discount.value);
+                    return output;
+                }
+            }
+        }
+        return 0;
+    }
+
+    float show_info_reserve(vector<string> words,App& app)
     {
         cout<<"Reserve ID: "<<cur_client.reserves[cur_client.reserves.size()-1].get_reserve_id()<<endl;
         cout<<"Table "<<words[1]<<" for "<<words[2]<<" to "<<words[3]<<" in "<<words[0]<<endl;
         int price=cur_client.reserves[cur_client.reserves.size()-1].get_price();
-        cout<<"Price: "<<price<<endl;
+        cout<<"Original Price: "<<price<<endl;
+
+        float l1,l2,l3;
+
+
+        l1=show_order_amount_discount(app,words[0],price);
+        vector<string>foods;
+        foods=analysis.separate_food(words);
+        l2=show_total_item(app,words[0],foods);
+        l3=show_first_discount(app,words[0]);
+        cout<<"Total Discount: ";
+        cout<<(l1+l2+l3)<<endl;
+        cout<<"Total Price: "<<(price-(l1+l2+l3))<<endl;
+        return (price-(l1+l2+l3));
+
+
     }
 
 
@@ -1511,10 +1609,13 @@ private:
         // }
         // else
         //     return false;
-        if(post.reserve(words,app) && cur_client.Add_reservetion(words))
+        if(post.reserve(words,app,cur_client) && cur_client.Add_reservetion(words))
         {
+            int l;
             update_client(cur_client,words,app);
-            show_info_reserve(words,app);
+            l=show_info_reserve(words,app);
+            cur_client.decrease_budget(l);
+            cur_client.set_num_of_reserve(1);
             return true;
         }else
             return false;
