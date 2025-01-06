@@ -446,6 +446,7 @@ private:
     vector<int> prices;
     int reserve_id;
     int start_time,end_time;
+    int final_price=0;
     friend class Client;
     
 public:
@@ -466,7 +467,11 @@ public:
         prices=price_foods;
     }
 
-    void delete_reserve(){status=0;}
+    int delete_reserve()
+    {
+        status=0;
+        return final_price;
+    }
 
     int get_status(){return status;}
 
@@ -494,7 +499,22 @@ public:
     
     string get_restaurant_name(){return restaurant_name;}
 
+    void set_final_price(int x)
+    {
+        final_price=x;
+    }
 
+    int get_final_price(){return final_price;}
+
+    int get_inital_price()
+    {
+        int x=0; 
+        for(int i=0;i<prices.size();i++)
+        {
+            x+=prices[i];
+        }
+        return x;
+    }
 };
 
 
@@ -544,6 +564,7 @@ private:
     friend class POST;
     friend class Server;
     friend class DELETE;
+    friend class Client;
     Output_msg err;
 
     vector<discount> discounts;
@@ -556,12 +577,6 @@ private:
 
     bool conflict_time(int s1,int e1,int s2 , int e2)
     {
-        // cout<<"------------------"<<endl;
-        // cout<<"s1 hast "<<s1<<endl;
-        // cout<<"e1 hast "<<e1<<endl;
-        // cout<<"s2 hast "<<s2<<endl;
-        // cout<<"e2 hast "<<e2<<endl;
-        // cout<<"------------------"<<endl;
         if(s1<1 || e1>24)
             return false;
         if(e1>s2 && e1<e2)
@@ -614,20 +629,64 @@ private:
         int sum_all=0;
         for(int i=0;i<prices.size();i++)
             sum_all+=prices[i];
+
+
+        int takhfif=0;
+        for(int i=0;i<foods.size();i++)
+        {
+
+            for(int j=0;j<foods.size();j++)
+            {
+                if(discounts[i].name_food==foods[j])
+                {
+                    if(discounts[i].type=="amount")
+                    {
+                        takhfif+=stoi(discounts[i].value);
+                    }
+                
+                    if(discounts[i].type=="percent")
+                    {
+                        takhfif+= stoi(discounts[i].value)*prices[i];
+                    }
+                }
+            }
+        }
+        if(first_order_discount.type=="amount")
+        {
+            takhfif+=stoi(first_order_discount.value);
+        }
+        if(first_order_discount.type=="percent")
+        {
+            takhfif+=stoi(first_order_discount.value) * (sum_all-takhfif)/100;
+        }
+
+
+        if((sum_all-takhfif)>stoi(total_price_discount.floor_price))
+        {
+            if(total_price_discount.type=="amount")
+            {
+                takhfif+=stoi(total_price_discount.value);
+            }
+            if(total_price_discount.type=="percent")
+            {
+                takhfif+=stof(total_price_discount.value) * (sum_all-takhfif)/100;
+            }
+        }
+         
         
-        if(budget<sum_all)
+        if(budget<(sum_all-takhfif))
         {
             err.Bad_Request();
             return false;
         }
 
+        reserve.set_final_price(sum_all-takhfif);
         reserve.set_price(prices);
         reserve.set_reserve_id(reserves.size()+1);
         reserves.push_back(reserve);
         return true;
     }
 
-    
 
 public:
 
@@ -667,13 +726,8 @@ public:
 
 
         map<int , string > output;
-        // string itt;
-        // vector<string> irrr;
         vector<int> num_of_table_id;
-        // for(int i=0;i<reserves.size();i++)
-        // {
-        //     num_of_table_id.push_back(reserves[i].get_table_id());
-        // }
+
 
         for(int i=0;i<num_of_table;i++)
         {
@@ -871,7 +925,6 @@ public:
     }
 
     void set_district(string district_name){district=district_name;}
-    // string get_name(){return username;}
 
     bool conflict_time_client(int s1,int e1,int s2 , int e2)
     {
@@ -902,10 +955,18 @@ public:
                 return false;
             }
         }
-        
-        // Reserve reserve(words[0],stoi(words[1]),start_time,end_time,aaann.separate_food(words));
-        // reserves.push_back(reserve);
         return true;
+    }
+
+
+    int find_price(string name, map<string , int > menu_item)
+    {
+        for(auto it=menu_item.begin();it!=menu_item.end();it++)
+        {
+            if((*it).first==name)
+                return (*it).second;
+        }
+        return 0;
     }
 
     bool Add_reservetion(vector<string> words)
@@ -936,7 +997,6 @@ public:
         }
         for(int i=0;i<perm.size();i++)
         {
-            // string x;
             int index=perm[i]/100;
             cout<<reserves[index].get_reserve_id()<<": ";
             cout<<reserves[index].get_restaurant_name()<<" ";
@@ -952,6 +1012,8 @@ public:
                     cout<<count(reserves[index].foods_name.begin(),reserves[index].foods_name.end(),reserves[index].foods_name[j])<<") ";
                 }
             }
+            cout<<" "<<reserves[index].get_inital_price()<<" "<<reserves[index].get_final_price();
+
             cout<<endl;
         }
     }
@@ -1075,6 +1137,7 @@ private:
     friend class Server;
     friend class POST;
     friend class DELETE;
+    friend class Client;
 
 public:
     App(){status=1;}
@@ -1377,8 +1440,9 @@ private:
 public:
     DELETE(){}
 
-    bool del_func(string restaurant_name, int reserve_id,App& app)
+    int del_func(string restaurant_name, int reserve_id,App& app)
     {
+        int x;
         for(int i=0;i<app.restaurants.size();i++)
         {
             if(app.restaurants[i].name ==restaurant_name)
@@ -1387,8 +1451,8 @@ public:
                 {
                     if(app.restaurants[i].reserves[j].get_reserve_id()==reserve_id)
                     {
-                        app.restaurants[i].reserves[j].delete_reserve();
-                        return true;
+                        x=app.restaurants[i].reserves[j].delete_reserve();
+                        return x;
                     }
                 }
                 err.Not_Found();
@@ -1575,6 +1639,53 @@ private:
         cout<<"Total Discount: ";
         cout<<(l1+l2+l3)<<endl;
         cout<<"Total Price: "<<(price-(l1+l2+l3))<<endl;
+
+
+
+
+        // vector<int>priceeee;
+        // for(int i=0;i<app.restaurants.size();i++)
+        // {
+        //     if(app.restaurants[i].name==words[0])
+        //     {
+        //         for(auto it=app.restaurants[i].menu_item.begin() ;it!=app.restaurants[i].menu_item.end(); it++)
+        //         {
+        //             if(find(foods.begin(),foods.end(), (*it).first )!=foods.end())
+        //             {
+        //                 priceeee.push_back((*it).second);
+        //             }
+        //         }
+        //     }
+        // }
+
+
+        // int takhfif;
+        // for(int i=0;i<app.restaurants.size();i++)
+        // {
+        //     if(app.restaurants[i].name == words[0])
+        //     {
+        //         for(int j=0;j<foods.size();j++)
+        //         {
+        //             for(int k=0;k<app.restaurants[i].discounts.size();k++)
+        //             {
+        //                 if(app.restaurants[i].discounts[k].name_food==foods[j])
+        //                 {
+        //                     if(app.restaurants[i].discounts[k].type=="amount")
+        //                     {
+        //                         takhfif+=stoi(app.restaurants[i].discounts[k].value);
+        //                     }            
+        //                     if(app.restaurants[i].discounts[k].type=="percent")
+        //                     {
+        //                         takhfif+=stoi(app.restaurants[i].discounts[k].value) * priceeee[j];
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+
+
+
         return (price-(l1+l2+l3));
 
 
@@ -1589,6 +1700,7 @@ private:
             {
                 client.reserves[client.reserves.size()-1].set_reserve_id(app.restaurants[i].reserves[app.restaurants[i].reserves.size()-1].get_reserve_id());
                 client.reserves[client.reserves.size()-1].set_price(app.restaurants[i].reserves[app.restaurants[i].reserves.size()-1].get_prices());
+                client.reserves[client.reserves.size()-1].set_final_price(app.restaurants[i].reserves[app.restaurants[i].reserves.size()-1].get_final_price());
             }
         }
     }
@@ -1597,18 +1709,6 @@ private:
     {
         vector<string> words=analysis.Analysis_reserve(line);
         POST post;
-        // if(cur_client.Add_reserve(words))
-        // {
-        //     if(post.reserve(words,app))
-        //     {
-        //         update_client(cur_client,words,app);
-        //         show_info_reserve(words,app);
-        //         return true;
-        //     }else
-        //         return false;
-        // }
-        // else
-        //     return false;
         if(post.reserve(words,app,cur_client) && cur_client.Add_reservetion(words))
         {
             int l;
@@ -1675,8 +1775,11 @@ private:
             {
                 if(to_string(cur_client.reserves[i].get_reserve_id())==reserve_id)
                 {
+                    int x;
                     cur_client.reserves[i].delete_reserve();
-                    del.del_func(restaurant_name,stoi(reserve_id),app);
+                    x=del.del_func(restaurant_name,stoi(reserve_id),app);
+                    // cout<<"salam man injam   "<<x<<endl;
+                    cur_client.decrease_budget(-1 * x* 0.6);
                     err.OK();
                     return;
                 }else
@@ -1727,7 +1830,6 @@ public:
 
     void check(App& app, int &login_status)
     {
-        // cout<<login_status<<"   "<<type_cmd<<endl;
         if(login_status==DE_ACTIVE)
         {
 
